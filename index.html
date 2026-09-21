@@ -1,221 +1,680 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Finance Tracker</title>
-<meta name="theme-color" content="#0b1120"/>
+<title>Finance</title>
+<meta name="theme-color" content="#ffffff"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💷</text></svg>"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2310b981'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'>£</text></svg>"/>
 <style>
+/* ---------------------------------------------------------------
+   Design tokens
+   --------------------------------------------------------------- */
 :root{
-  --bg:#0b1120; --surface:#131c31; --surface2:#1b2740; --border:#24334f;
-  --text:#e6edf7; --muted:#8fa3c0; --accent:#3ddc97; --accent2:#5b9dff;
-  --danger:#ff6b6b; --warn:#ffb347; --radius:12px;
+  --bg:#fafbfc;
+  --card:#ffffff;
+  --card-hover:#fcfcfd;
+  --border:#eaecf0;
+  --border-strong:#d8dce3;
+  --text:#0f172a;
+  --text-2:#667085;
+  --text-3:#98a2b3;
+  --accent:#10b981;
+  --accent-strong:#059669;
+  --accent-soft:#ecfdf5;
+  --accent-ring:rgba(16,185,129,.18);
+  --danger:#ef4444;
+  --danger-soft:#fef2f2;
+  --warn:#f59e0b;
+  --warn-soft:#fffbeb;
+  --r-sm:8px;
+  --r:12px;
+  --r-lg:16px;
+  --r-xl:20px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 4px 12px rgba(16,24,40,.06);
+  --shadow-lg:0 12px 32px rgba(16,24,40,.12);
+  --header-h:56px;
+  --nav-h:64px;
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{
-  background:var(--bg); color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
-  padding-bottom:calc(80px + env(safe-area-inset-bottom));
-}
-h1,h2,h3{margin:0 0 .5rem;font-weight:600;line-height:1.25}
-h2{font-size:18px} h3{font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-a{color:var(--accent2)}
-.hidden{display:none !important}
 
-/* Topbar */
-.topbar{
-  position:sticky; top:0; z-index:50;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:.75rem 1rem; padding-top:calc(.75rem + env(safe-area-inset-top));
-  background:rgba(11,17,32,.92); backdrop-filter:blur(10px);
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  color:var(--text);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+}
+@media(min-width:768px){ body{padding-bottom:0} }
+
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+h1{font-size:24px;letter-spacing:-.02em}
+h2{font-size:18px}
+h3{font-size:15px}
+p{margin:0}
+button{font-family:inherit}
+a{color:var(--accent-strong);text-decoration:none}
+.hidden{display:none !important}
+.num,td.num,th.num,.value{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------------------------------------------------------------
+   Header
+   --------------------------------------------------------------- */
+.app-header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:saturate(180%) blur(12px);
+  -webkit-backdrop-filter:saturate(180%) blur(12px);
   border-bottom:1px solid var(--border);
 }
-.brand{display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:16px}
-.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
-.topbar-actions{display:flex;gap:.4rem}
-
-/* Tabs */
-.tabs{
-  display:flex; gap:.25rem; overflow-x:auto; padding:.5rem .75rem;
-  border-bottom:1px solid var(--border); background:var(--bg);
-  position:sticky; top:calc(52px + env(safe-area-inset-top)); z-index:40;
-  scrollbar-width:none;
+.header-inner{
+  max-width:960px;margin:0 auto;
+  height:var(--header-h);
+  padding:0 16px;
+  padding-top:env(safe-area-inset-top);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
 }
-.tabs::-webkit-scrollbar{display:none}
-.tab{
-  flex:0 0 auto; padding:.45rem .85rem; border-radius:999px; border:1px solid transparent;
-  background:transparent; color:var(--muted); font-size:13.5px; font-weight:500;
-  cursor:pointer; font-family:inherit; white-space:nowrap;
+@media(min-width:768px){
+  .header-inner{padding:0 24px}
 }
-.tab:hover{color:var(--text); background:var(--surface)}
-.tab.active{background:var(--surface2); color:var(--text); border-color:var(--border)}
-
-/* Layout */
-main{padding:1rem; max-width:1100px; margin:0 auto}
-.grid{display:grid; gap:.75rem}
-.g2{grid-template-columns:repeat(2,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g4{grid-template-columns:repeat(4,1fr)}
-@media(max-width:720px){
-  .g4{grid-template-columns:repeat(2,1fr)}
-  .g3{grid-template-columns:1fr}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  font-weight:600;font-size:16px;letter-spacing:-.01em;
 }
-@media(max-width:420px){
-  .g2{grid-template-columns:1fr}
+.brand-mark{
+  width:26px;height:26px;border-radius:8px;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:15px;
 }
-
-/* Cards */
-.card{
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius); padding:1rem;
-}
-.card + .card{margin-top:.75rem}
-.stat{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:.85rem 1rem}
-.stat .label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.35rem}
-.stat .value{font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
-.stat .sub{font-size:11.5px; color:var(--muted); margin-top:.2rem}
-.pos{color:var(--accent)} .neg{color:var(--danger)} .warn{color:var(--warn)}
-
-/* Buttons */
-.btn{
-  display:inline-flex; align-items:center; gap:.4rem; justify-content:center;
-  padding:.55rem .95rem; border-radius:9px; border:1px solid var(--border);
-  background:var(--surface2); color:var(--text); font-size:13.5px; font-weight:500;
-  cursor:pointer; font-family:inherit; transition:.15s; white-space:nowrap;
-}
-.btn:hover{background:var(--border)}
-.btn-primary{background:var(--accent); color:#04150d; border-color:var(--accent); font-weight:600}
-.btn-primary:hover{filter:brightness(1.1)}
-.btn-danger{background:transparent; color:var(--danger); border-color:rgba(255,107,107,.35)}
-.btn-danger:hover{background:rgba(255,107,107,.12)}
-.btn-ghost{background:transparent}
-.btn-sm{padding:.35rem .65rem; font-size:12.5px}
-
-/* Forms */
-label{display:block; font-size:12px; color:var(--muted); margin-bottom:.3rem; text-transform:uppercase; letter-spacing:.05em}
-input,select,textarea{
-  width:100%; padding:.6rem .7rem; border-radius:9px;
-  border:1px solid var(--border); background:var(--bg); color:var(--text);
-  font-size:14.5px; font-family:inherit; outline:none;
-}
-input:focus,select:focus,textarea:focus{border-color:var(--accent2); box-shadow:0 0 0 3px rgba(91,157,255,.13)}
-input[type=checkbox]{width:auto; accent-color:var(--accent)}
-.field{margin-bottom:.75rem}
-.row{display:grid; gap:.6rem}
-.row.c2{grid-template-columns:1fr 1fr}
-.row.c3{grid-template-columns:1fr 1fr 1fr}
-@media(max-width:480px){ .row.c3{grid-template-columns:1fr 1fr} }
-
-/* Tables */
-.table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:var(--radius); border:1px solid var(--border)}
-table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:560px}
-th{
-  text-align:left; padding:.6rem .7rem; background:var(--surface2);
-  color:var(--muted); font-weight:500; font-size:11.5px;
-  text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;
-  position:sticky; top:0;
-}
-td{padding:.6rem .7rem; border-top:1px solid var(--border); white-space:nowrap}
-tbody tr:hover{background:var(--surface)}
-td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
-td.actions{text-align:right; white-space:nowrap}
+.header-actions{display:flex;align-items:center;gap:4px}
 .icon-btn{
-  background:transparent; border:none; color:var(--muted); cursor:pointer;
-  padding:.25rem .4rem; border-radius:6px; font-size:14px; font-family:inherit;
+  width:38px;height:38px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:none;background:transparent;
+  border-radius:10px;
+  color:var(--text-2);
+  cursor:pointer;
+  transition:background .15s, color .15s;
 }
-.icon-btn:hover{color:var(--text); background:var(--surface2)}
-.empty{padding:2rem 1rem; text-align:center; color:var(--muted); font-size:13.5px}
+.icon-btn:hover{background:var(--border);color:var(--text)}
+.icon-btn:active{background:var(--border-strong)}
+.icon-btn svg{width:20px;height:20px;stroke-width:1.8}
 
-/* Filters */
-.filters{display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:.75rem}
-.filters .field{margin:0; flex:1 1 130px; min-width:120px}
-.filters .field.grow{flex:2 1 200px}
-
-/* Banner */
+/* ---------------------------------------------------------------
+   Backup banner
+   --------------------------------------------------------------- */
 .banner{
-  margin:0; padding:.7rem 1rem; font-size:13px;
-  background:rgba(255,179,71,.12); color:var(--warn);
-  border-bottom:1px solid rgba(255,179,71,.28);
-  display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap;
+  background:var(--warn-soft);
+  border-bottom:1px solid #fde68a;
+  color:#92400e;
+  font-size:13.5px;
+  padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;
 }
-.banner button{flex:0 0 auto}
+.banner-inner{max-width:960px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(min-width:768px){ .banner{padding:10px 24px} }
 
-/* Modal */
-.modal-overlay{
-  position:fixed; inset:0; background:rgba(4,8,18,.72); backdrop-filter:blur(3px);
-  z-index:100; display:flex; align-items:flex-end; justify-content:center;
-  padding:0; animation:fade .15s ease;
+/* ---------------------------------------------------------------
+   Tabs / Navigation
+   --------------------------------------------------------------- */
+.nav-desktop{display:none}
+@media(min-width:768px){
+  .nav-desktop{
+    display:block;
+    position:sticky;top:var(--header-h);z-index:40;
+    background:rgba(255,255,255,.85);
+    backdrop-filter:saturate(180%) blur(12px);
+    -webkit-backdrop-filter:saturate(180%) blur(12px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-inner{
+    max-width:960px;margin:0 auto;
+    padding:0 24px;
+    display:flex;gap:4px;
+  }
+  .nav-desktop .tab{
+    position:relative;
+    padding:14px 4px;
+    margin-right:20px;
+    background:transparent;border:none;
+    color:var(--text-2);
+    font-size:14px;font-weight:500;
+    cursor:pointer;
+  }
+  .nav-desktop .tab:hover{color:var(--text)}
+  .nav-desktop .tab.active{color:var(--text)}
+  .nav-desktop .tab.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+    background:var(--accent);border-radius:2px 2px 0 0;
+  }
 }
-@media(min-width:640px){ .modal-overlay{align-items:center; padding:1rem} }
-@keyframes fade{from{opacity:0}to{opacity:1}}
-.modal{
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:16px 16px 0 0; width:100%; max-width:520px;
-  max-height:92vh; overflow-y:auto;
-  padding:1.25rem; padding-bottom:calc(1.25rem + env(safe-area-inset-bottom));
-  animation:slide .2s ease;
-}
-@media(min-width:640px){ .modal{border-radius:16px} }
-@keyframes slide{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
-.modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem}
-.modal-head h2{font-size:17px; margin:0}
-.modal-foot{display:flex; gap:.5rem; justify-content:flex-end; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border)}
-.modal-foot .btn-danger{margin-right:auto}
 
-/* Chart */
-.chart{width:100%; height:auto; display:block}
-.legend{display:flex; gap:1rem; font-size:12px; color:var(--muted); margin-top:.5rem; justify-content:center}
-.legend span{display:inline-flex; align-items:center; gap:.35rem}
+.nav-mobile{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:saturate(180%) blur(12px);
+  -webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-top:1px solid var(--border);
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;
+}
+@media(min-width:768px){ .nav-mobile{display:none} }
+.nav-mobile .tab{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;
+  height:var(--nav-h);
+  background:transparent;border:none;
+  color:var(--text-3);
+  font-size:10.5px;font-weight:500;
+  cursor:pointer;
+  padding:8px 2px;
+  transition:color .15s;
+}
+.nav-mobile .tab svg{width:22px;height:22px;stroke-width:1.8}
+.nav-mobile .tab.active{color:var(--accent-strong)}
+
+/* ---------------------------------------------------------------
+   Main layout
+   --------------------------------------------------------------- */
+.app-main{
+  max-width:960px;margin:0 auto;
+  padding:20px 16px 24px;
+}
+@media(min-width:768px){ .app-main{padding:28px 24px 48px} }
+
+.section{margin-bottom:24px}
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:14px;flex-wrap:wrap;
+}
+.section-title{font-size:15px;font-weight:600;color:var(--text)}
+.section-sub{font-size:13px;color:var(--text-2);margin-top:2px}
+.page-title{font-size:24px;letter-spacing:-.02em;font-weight:600}
+.page-sub{font-size:13.5px;color:var(--text-2);margin-top:3px}
+
+/* ---------------------------------------------------------------
+   Cards
+   --------------------------------------------------------------- */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:20px;
+}
+.card + .card{margin-top:12px}
+.card-flush{padding:0;overflow:hidden}
+.card-pad{padding:16px}
+
+/* Hero balance card */
+.hero{
+  background:linear-gradient(135deg,#10b981 0%,#059669 100%);
+  color:#fff;
+  border-radius:var(--r-xl);
+  padding:24px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::after{
+  content:"";position:absolute;right:-60px;top:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.08);
+}
+.hero .label{
+  font-size:12.5px;font-weight:500;
+  color:rgba(255,255,255,.78);
+  margin-bottom:6px;
+  position:relative;
+}
+.hero .value{
+  font-size:34px;font-weight:600;letter-spacing:-.025em;
+  line-height:1.1;position:relative;
+}
+@media(min-width:480px){ .hero .value{font-size:40px} }
+.hero .meta{
+  position:relative;
+  margin-top:14px;
+  display:flex;gap:20px;flex-wrap:wrap;
+  font-size:13px;color:rgba(255,255,255,.85);
+}
+.hero .meta strong{color:#fff;font-weight:600}
+
+/* Grid */
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr}
+.g3{grid-template-columns:1fr}
+.g4{grid-template-columns:repeat(2,1fr)}
+@media(min-width:640px){
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+}
+@media(min-width:768px){
+  .g4{grid-template-columns:repeat(4,1fr)}
+}
+
+/* Stat */
+.stat{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:16px;
+  display:flex;flex-direction:column;gap:4px;
+}
+.stat .label{
+  font-size:12.5px;color:var(--text-2);font-weight:500;
+  display:flex;align-items:center;gap:6px;
+}
+.stat .value{
+  font-size:20px;font-weight:600;letter-spacing:-.015em;
+  margin-top:2px;
+}
+.stat .value.lg{font-size:22px}
+.stat .sub{font-size:12px;color:var(--text-3);margin-top:2px}
+.pos{color:var(--accent-strong)}
+.neg{color:var(--danger)}
+.warnc{color:var(--warn)}
+
+/* ---------------------------------------------------------------
+   Buttons
+   --------------------------------------------------------------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:40px;padding:0 16px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  font-size:14px;font-weight:500;
+  cursor:pointer;
+  transition:background .15s,border-color .15s,transform .05s;
+  white-space:nowrap;
+  user-select:none;
+}
+.btn:hover{background:var(--card-hover);border-color:var(--border-strong)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:17px;height:17px;stroke-width:2}
+.btn-primary{
+  background:var(--accent);border-color:var(--accent);color:#fff;
+}
+.btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn-danger{
+  background:transparent;border-color:var(--danger);color:var(--danger);
+}
+.btn-danger:hover{background:var(--danger-soft)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--border)}
+.btn-sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px}
+.btn-sm svg{width:15px;height:15px}
+
+/* ---------------------------------------------------------------
+   Forms
+   --------------------------------------------------------------- */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+label{
+  font-size:13px;font-weight:500;color:var(--text);
+}
+.label-hint{font-size:12px;color:var(--text-3);font-weight:400}
+input,select,textarea{
+  width:100%;
+  height:44px;
+  padding:0 14px;
+  border-radius:10px;
+  border:1px solid var(--border-strong);
+  background:var(--card);
+  color:var(--text);
+  font-size:15px;
+  font-family:inherit;
+  outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  -webkit-appearance:none;
+  appearance:none;
+}
+input::placeholder{color:var(--text-3)}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-ring);
+}
+select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:38px;
+}
+input[type="date"]{-webkit-appearance:none;appearance:none;background:var(--card)}
+input[type="checkbox"]{
+  width:18px;height:18px;height:auto;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+.check-row{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card);
+  cursor:pointer;
+  user-select:none;
+}
+.check-row input{margin:0}
+.check-row span{font-size:14px}
+.row{display:grid;gap:12px}
+.row.c2{grid-template-columns:1fr}
+.row.c3{grid-template-columns:1fr 1fr}
+@media(min-width:480px){
+  .row.c2{grid-template-columns:1fr 1fr}
+  .row.c3{grid-template-columns:1fr 1fr 1fr}
+}
+
+/* ---------------------------------------------------------------
+   Filters
+   --------------------------------------------------------------- */
+.filters{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:16px;
+}
+.filters .field{margin:0;gap:4px}
+.filters label{font-size:12px;color:var(--text-2)}
+.filters input,.filters select{height:38px;font-size:13.5px}
+.filters .grow{grid-column:1/-1}
+.filters .actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+@media(min-width:640px){
+  .filters{grid-template-columns:repeat(4,1fr) auto}
+  .filters .grow{grid-column:span 1}
+  .filters .actions{grid-column:auto}
+}
+
+/* ---------------------------------------------------------------
+   Tables
+   --------------------------------------------------------------- */
+.table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:var(--r-lg);
+  border:1px solid var(--border);
+  background:var(--card);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+  min-width:600px;
+}
+th{
+  text-align:left;
+  padding:12px 16px;
+  background:var(--bg);
+  color:var(--text-2);
+  font-weight:500;
+  font-size:12.5px;
+  white-space:nowrap;
+  border-bottom:1px solid var(--border);
+}
+td{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+  color:var(--text);
+}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--card-hover)}
+td.num,th.num{text-align:right}
+td.actions,th.actions{text-align:right;width:80px}
+td .row-actions{display:inline-flex;gap:2px}
+
+.icon-btn-sm{
+  width:32px;height:32px;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:none;background:transparent;color:var(--text-3);
+  cursor:pointer;transition:.15s;
+}
+.icon-btn-sm:hover{background:var(--border);color:var(--text)}
+.icon-btn-sm.danger:hover{background:var(--danger-soft);color:var(--danger)}
+.icon-btn-sm svg{width:16px;height:16px;stroke-width:2}
+
+.empty{
+  padding:40px 24px;
+  text-align:center;
+  color:var(--text-2);
+  font-size:14px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+}
+.empty strong{display:block;color:var(--text);font-weight:600;font-size:15px;margin-bottom:4px}
+.empty .btn{margin-top:14px}
+
+/* ---------------------------------------------------------------
+   Pills / badges
+   --------------------------------------------------------------- */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:12px;font-weight:500;
+  background:var(--bg);
+  color:var(--text-2);
+  border:1px solid var(--border);
+  line-height:1.4;
+}
+.pill.success{background:var(--accent-soft);color:var(--accent-strong);border-color:#a7f3d0}
+.pill.danger{background:var(--danger-soft);color:var(--danger);border-color:#fecaca}
+
+/* ---------------------------------------------------------------
+   Charts
+   --------------------------------------------------------------- */
+.chart{width:100%;height:auto;display:block;margin-top:6px}
+.legend{
+  display:flex;gap:18px;font-size:12.5px;color:var(--text-2);
+  margin-top:10px;justify-content:center;
+}
+.legend span{display:inline-flex;align-items:center;gap:7px}
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 
-/* Toast */
-#toast{
-  position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom));
-  transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
-  background:var(--surface2); border:1px solid var(--border); color:var(--text);
-  padding:.6rem 1rem; border-radius:9px; font-size:13.5px; z-index:200;
-  transition:.25s; box-shadow:0 8px 24px rgba(0,0,0,.4); max-width:88vw;
+/* ---------------------------------------------------------------
+   Lists / key-value
+   --------------------------------------------------------------- */
+.kv{
+  display:flex;justify-content:space-between;gap:16px;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
 }
-#toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
-#toast.ok{border-color:rgba(61,220,151,.4)} #toast.err{border-color:rgba(255,107,107,.45)}
-
-/* Misc */
-.muted{color:var(--muted)} .small{font-size:12.5px}
-.divider{height:1px;background:var(--border);margin:1rem 0}
-.pill{display:inline-block;padding:.1rem .5rem;border-radius:999px;font-size:11px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
-.pill.essential{background:rgba(91,157,255,.14);color:var(--accent2);border-color:rgba(91,157,255,.3)}
-.section-head{display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap}
-.list-reset{list-style:none;padding:0;margin:0}
-.kv{display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid var(--border);font-size:13.5px}
 .kv:last-child{border-bottom:none}
-.kv span:last-child{font-variant-numeric:tabular-nums;font-weight:500}
+.kv:first-child{padding-top:0}
+.kv .k{color:var(--text-2)}
+.kv .v{font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.kv .v .pct{color:var(--text-3);font-weight:400;margin-left:6px;font-size:12.5px}
+
+/* ---------------------------------------------------------------
+   Activity list (dashboard)
+   --------------------------------------------------------------- */
+.activity{list-style:none;padding:0;margin:0}
+.activity li{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+}
+.activity li:last-child{border-bottom:none}
+.activity .badge{
+  width:34px;height:34px;flex:0 0 34px;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+.activity .badge.in{background:var(--accent-soft);color:var(--accent-strong)}
+.activity .badge.out{background:var(--danger-soft);color:var(--danger)}
+.activity .badge svg{width:17px;height:17px;stroke-width:2.2}
+.activity .body{flex:1;min-width:0}
+.activity .title{
+  font-size:14px;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.activity .meta{font-size:12.5px;color:var(--text-3);margin-top:1px}
+.activity .amount{
+  font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* ---------------------------------------------------------------
+   Modal
+   --------------------------------------------------------------- */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(16,24,40,.4);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fade .18s ease;
+}
+@media(min-width:640px){
+  .modal-overlay{align-items:center;padding:24px}
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:.8}to{transform:none;opacity:1}}
+@keyframes scaleIn{from{transform:scale(.96);opacity:.8}to{transform:none;opacity:1}}
+
+.modal{
+  background:var(--card);
+  width:100%;
+  max-width:520px;
+  max-height:92vh;
+  overflow-y:auto;
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:8px 20px calc(20px + env(safe-area-inset-bottom));
+  animation:slideUp .22s cubic-bezier(.2,.9,.3,1);
+}
+@media(min-width:640px){
+  .modal{
+    border-radius:var(--r-xl);
+    padding:20px 24px 24px;
+    animation:scaleIn .18s ease;
+    box-shadow:var(--shadow-lg);
+  }
+}
+.modal-grabber{
+  width:36px;height:4px;border-radius:999px;
+  background:var(--border-strong);
+  margin:6px auto 14px;
+}
+@media(min-width:640px){ .modal-grabber{display:none} }
+
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:20px;
+}
+.modal-head h2{font-size:17px}
+.modal-foot{
+  display:flex;gap:8px;justify-content:flex-end;
+  margin-top:20px;padding-top:16px;
+  border-top:1px solid var(--border);
+  position:sticky;bottom:0;background:var(--card);
+}
+.modal-foot .btn-danger{margin-right:auto}
+
+/* ---------------------------------------------------------------
+   Toast
+   --------------------------------------------------------------- */
+#toast{
+  position:fixed;
+  left:50%;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));
+  transform:translate(-50%,20px);
+  opacity:0;pointer-events:none;
+  background:#0f172a;color:#fff;
+  padding:11px 18px;border-radius:10px;
+  font-size:13.5px;font-weight:500;
+  z-index:200;
+  transition:transform .25s,opacity .25s;
+  box-shadow:var(--shadow-lg);
+  max-width:calc(100vw - 32px);
+}
+@media(min-width:768px){ #toast{bottom:24px} }
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.ok{background:#065f46}
+#toast.err{background:#991b1b}
+
+/* ---------------------------------------------------------------
+   Misc
+   --------------------------------------------------------------- */
+.muted{color:var(--text-2)}
+.subtle{color:var(--text-3)}
+.small{font-size:12.5px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.flex{display:flex;gap:8px;align-items:center}
+.flex-wrap{flex-wrap:wrap}
+
+/* print */
+@media print{ .nav-mobile,.nav-desktop,.app-header,.banner{display:none} body{padding:0} }
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand"><span class="dot"></span> Finance Tracker</div>
-  <div class="topbar-actions">
-    <button id="btnQuickBackup" class="btn btn-ghost btn-sm" title="Backup now">⤓ Backup</button>
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark">£</div>
+      <span>Finance</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btnQuickBackup" title="Backup" aria-label="Backup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
   </div>
 </header>
 
 <div id="backupBanner" class="banner hidden"></div>
 
-<nav class="tabs" id="tabs">
-  <button class="tab active" data-view="dashboard">Dashboard</button>
-  <button class="tab" data-view="income">Income</button>
-  <button class="tab" data-view="expenses">Expenses</button>
-  <button class="tab" data-view="accounts">Accounts</button>
-  <button class="tab" data-view="reports">Reports</button>
-  <button class="tab" data-view="data">Data</button>
+<nav class="nav-desktop">
+  <div class="nav-inner" id="navDesktop">
+    <button class="tab active" data-view="dashboard">Home</button>
+    <button class="tab" data-view="income">Income</button>
+    <button class="tab" data-view="expenses">Expenses</button>
+    <button class="tab" data-view="accounts">Accounts</button>
+    <button class="tab" data-view="reports">Reports</button>
+  </div>
 </nav>
 
-<main id="main"></main>
+<main id="main" class="app-main"></main>
+
+<nav class="nav-mobile" id="navMobile">
+  <button class="tab active" data-view="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="tab" data-view="income">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    <span>Income</span>
+  </button>
+  <button class="tab" data-view="expenses">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    <span>Expenses</span>
+  </button>
+  <button class="tab" data-view="accounts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    <span>Accounts</span>
+  </button>
+  <button class="tab" data-view="reports">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Reports</span>
+  </button>
+</nav>
+
 <div id="modalRoot"></div>
 <div id="toast"></div>
 
@@ -228,66 +687,67 @@ td.actions{text-align:right; white-space:nowrap}
    ============================================================ */
 const STORAGE_KEY = 'financeTracker.v1';
 const PAY_TYPES = [
-  {id:'hourly',  label:'Hourly',  qtyLabel:'Hours',  rateLabel:'Rate / hour',  hoursMode:'direct'},
-  {id:'daily',   label:'Daily',   qtyLabel:'Days',   rateLabel:'Rate / day',   hoursMode:'derive'},
-  {id:'weekly',  label:'Weekly',  qtyLabel:'Weeks',  rateLabel:'Rate / week',  hoursMode:'manual'},
-  {id:'monthly', label:'Monthly', qtyLabel:'Months', rateLabel:'Rate / month', hoursMode:'manual'},
-  {id:'lump',    label:'One-off', qtyLabel:'Qty',    rateLabel:'Rate',         hoursMode:'manual'}
+  {id:'hourly',  label:'Hourly',  qtyLabel:'Hours',  rateLabel:'Rate per hour',  hoursMode:'direct'},
+  {id:'daily',   label:'Daily',   qtyLabel:'Days',   rateLabel:'Rate per day',   hoursMode:'derive'},
+  {id:'weekly',  label:'Weekly',  qtyLabel:'Weeks',  rateLabel:'Rate per week',  hoursMode:'manual'},
+  {id:'monthly', label:'Monthly', qtyLabel:'Months', rateLabel:'Rate per month', hoursMode:'manual'},
+  {id:'lump',    label:'One-off', qtyLabel:'Qty',    rateLabel:'Rate',           hoursMode:'manual'}
 ];
 
 function defaultState(){
   return {
-    version: 1,
-    currency: '£',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    lastBackupAt: null,
-    settings: {
-      hoursPerDay: 8,
-      baselineMonthly: 0,
-      backupReminderDays: 7,
-      accounts: ['Holding','Operating','Savings'],
-      incomeSources: ['Client A','Client B','Employer','Gig','Other'],
-      expenseCategories: [
+    version:1,
+    currency:'£',
+    createdAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
+    lastBackupAt:null,
+    settings:{
+      hoursPerDay:8,
+      baselineMonthly:0,
+      backupReminderDays:7,
+      accounts:['Holding','Operating','Savings'],
+      incomeSources:['Client A','Client B','Employer','Gig','Other'],
+      expenseCategories:[
         'Rent/Mortgage','Utilities','Groceries','Transport','Insurance',
         'Debt Payment','Healthcare','Dining','Entertainment','Shopping',
         'Subscriptions','Car Maintenance','Gifts','Household','Other'
       ],
-      essentialCategories: [
+      essentialCategories:[
         'Rent/Mortgage','Utilities','Groceries','Transport',
         'Insurance','Debt Payment','Healthcare'
       ]
     },
-    openingBalances: { Holding: 0, Operating: 0, Savings: 0 },
-    incomes: [],
-    expenses: [],
-    transfers: []
+    openingBalances:{Holding:0,Operating:0,Savings:0},
+    incomes:[], expenses:[], transfers:[]
   };
 }
-
 let state = defaultState();
 
 /* ============================================================
-   UTILITIES
+   UTILS
    ============================================================ */
-const $  = (s, r) => (r||document).querySelector(s);
-const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+const $  = (s,r)=>(r||document).querySelector(s);
+const $$ = (s,r)=>Array.from((r||document).querySelectorAll(s));
 const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const isoOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const monthKeyOf = iso => iso.slice(0,7);
 const monthLabelOf = key => {
-  const [y,m] = key.split('-');
-  return new Date(Number(y), Number(m)-1, 1).toLocaleString('en-GB',{month:'short',year:'numeric'});
+  const [y,m]=key.split('-');
+  return new Date(+y,+m-1,1).toLocaleString('en-GB',{month:'short',year:'2-digit'});
 };
-const daysInclusive = (a,b) => Math.max(0, Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000) + 1);
-const fmtMoney = n => state.currency + num(n).toLocaleString('en-GB',{minimumFractionDigits:2, maximumFractionDigits:2});
+const daysInclusive = (a,b) => Math.max(0, Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000)+1);
+const fmtMoney = n => state.currency + num(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtMoney0 = n => state.currency + Math.round(num(n)).toLocaleString('en-GB');
-const fmtDate = iso => {
+const fmtDate = iso => { if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; };
+const fmtDateShort = iso => {
   if(!iso) return '';
-  const [y,m,d] = iso.split('-');
-  return `${d}/${m}/${y}`;
+  const [y,m,d]=iso.split('-');
+  const now=new Date();
+  const isThisYear = +y === now.getFullYear();
+  return isThisYear ? `${d}/${m}` : `${d}/${m}/${y.slice(2)}`;
 };
 
 function toast(msg, kind){
@@ -303,35 +763,24 @@ function toast(msg, kind){
    ============================================================ */
 function save(){
   state.updatedAt = new Date().toISOString();
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch(e) {
-    toast('Could not save to this browser. Export a backup now!', 'err');
-    console.error(e);
-  }
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ toast('Cannot save. Export a backup now!','err'); }
 }
-
 function load(){
-  try {
+  try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
-    const parsed = JSON.parse(raw);
-    state = migrate(parsed);
+    state = migrate(JSON.parse(raw));
     return true;
-  } catch(e) {
-    console.error('Load failed', e);
-    return false;
-  }
+  }catch(e){ return false; }
 }
-
 function migrate(data){
   const base = defaultState();
   const out = Object.assign({}, base, data);
-  out.settings = Object.assign({}, base.settings, data.settings || {});
-  out.openingBalances = Object.assign({}, base.openingBalances, data.openingBalances || {});
-  // ensure every account has an opening balance entry
-  (out.settings.accounts||[]).forEach(a => {
-    if(typeof out.openingBalances[a] !== 'number') out.openingBalances[a] = 0;
+  out.settings = Object.assign({}, base.settings, data.settings||{});
+  out.openingBalances = Object.assign({}, base.openingBalances, data.openingBalances||{});
+  (out.settings.accounts||[]).forEach(a=>{
+    if(typeof out.openingBalances[a] !== 'number') out.openingBalances[a]=0;
   });
   out.incomes  = Array.isArray(data.incomes)  ? data.incomes  : [];
   out.expenses = Array.isArray(data.expenses) ? data.expenses : [];
@@ -342,86 +791,79 @@ function migrate(data){
 /* ============================================================
    METRICS
    ============================================================ */
-function metricsFor(fromISO, toISO){
-  const inc = state.incomes.filter(i => i.date >= fromISO && i.date <= toISO);
-  const exp = state.expenses.filter(e => e.date >= fromISO && e.date <= toISO);
-
-  const totalIncome   = inc.reduce((s,i) => s + num(i.amount), 0);
-  const totalExpenses = exp.reduce((s,e) => s + num(e.amount), 0);
-  const hours         = inc.reduce((s,i) => s + num(i.hours), 0);
-  const workDays      = new Set(inc.map(i => i.date)).size;
-  const days          = Math.max(1, daysInclusive(fromISO, toISO));
-  const weeks         = days / 7;
-  const months        = days / 30.4375;
-  const years         = days / 365.25;
-
-  const incomeWithHours = inc.filter(i => num(i.hours) > 0).reduce((s,i) => s + num(i.amount), 0);
-
+function metricsFor(from,to){
+  const inc = state.incomes.filter(i=>i.date>=from && i.date<=to);
+  const exp = state.expenses.filter(e=>e.date>=from && e.date<=to);
+  const totalIncome   = inc.reduce((s,i)=>s+num(i.amount),0);
+  const totalExpenses = exp.reduce((s,e)=>s+num(e.amount),0);
+  const hours = inc.reduce((s,i)=>s+num(i.hours),0);
+  const workDays = new Set(inc.map(i=>i.date)).size;
+  const days = Math.max(1, daysInclusive(from,to));
+  const incomeWithHours = inc.filter(i=>num(i.hours)>0).reduce((s,i)=>s+num(i.amount),0);
   return {
-    from: fromISO, to: toISO, days,
-    totalIncome, totalExpenses,
-    net: totalIncome - totalExpenses,
-    hours, workDays,
-    incomeCount: inc.length,
-    expenseCount: exp.length,
-    perHour:  hours > 0     ? totalIncome / hours  : 0,
-    perDay:   workDays > 0  ? totalIncome / workDays : 0,
-    perWeek:  totalIncome / weeks,
-    perMonth: totalIncome / months,
-    perYear:  totalIncome / years,
-    hoursCoverage: totalIncome > 0 ? incomeWithHours / totalIncome : 0
+    from,to,days,totalIncome,totalExpenses,
+    net:totalIncome-totalExpenses,
+    hours,workDays,
+    incomeCount:inc.length,expenseCount:exp.length,
+    perHour: hours>0 ? totalIncome/hours : 0,
+    perDay:  workDays>0 ? totalIncome/workDays : 0,
+    perWeek: totalIncome/(days/7),
+    perMonth: totalIncome/(days/30.4375),
+    perYear: totalIncome/(days/365.25),
+    hoursCoverage: totalIncome>0 ? incomeWithHours/totalIncome : 0
   };
 }
-
 function accountBalance(name){
   let b = num(state.openingBalances[name]);
-  state.incomes.forEach(i => { if(i.account === name) b += num(i.amount); });
-  state.expenses.forEach(e => { if(e.account === name) b -= num(e.amount); });
-  state.transfers.forEach(t => {
-    if(t.from === name) b -= num(t.amount);
-    if(t.to   === name) b += num(t.amount);
+  state.incomes.forEach(i=>{ if(i.account===name) b+=num(i.amount); });
+  state.expenses.forEach(e=>{ if(e.account===name) b-=num(e.amount); });
+  state.transfers.forEach(t=>{
+    if(t.from===name) b-=num(t.amount);
+    if(t.to===name) b+=num(t.amount);
   });
   return b;
 }
-
 function totalBalance(){
-  return state.settings.accounts.reduce((s,a) => s + accountBalance(a), 0);
+  return state.settings.accounts.reduce((s,a)=>s+accountBalance(a),0);
 }
-
 function lastNMonths(n){
-  const out = [];
-  const now = new Date();
-  for(let i = n-1; i >= 0; i--){
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    out.push(key);
+  const out=[]; const now=new Date();
+  for(let i=n-1;i>=0;i--){
+    const d = new Date(now.getFullYear(),now.getMonth()-i,1);
+    out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
   }
   return out;
 }
-
 function monthTotals(key){
-  const inc = state.incomes.filter(i => monthKeyOf(i.date) === key);
-  const exp = state.expenses.filter(e => monthKeyOf(e.date) === key);
-  const income = inc.reduce((s,i) => s + num(i.amount), 0);
-  const expenses = exp.reduce((s,e) => s + num(e.amount), 0);
-  const hours = inc.reduce((s,i) => s + num(i.hours), 0);
-  const workDays = new Set(inc.map(i => i.date)).size;
+  const inc = state.incomes.filter(i=>monthKeyOf(i.date)===key);
+  const exp = state.expenses.filter(e=>monthKeyOf(e.date)===key);
+  const income = inc.reduce((s,i)=>s+num(i.amount),0);
+  const expenses = exp.reduce((s,e)=>s+num(e.amount),0);
+  const hours = inc.reduce((s,i)=>s+num(i.hours),0);
+  const workDays = new Set(inc.map(i=>i.date)).size;
   return {
-    key, income, expenses, net: income - expenses,
-    hours, workDays,
-    perHour: hours > 0 ? income / hours : 0,
-    count: inc.length + exp.length
+    key,income,expenses,net:income-expenses,hours,workDays,
+    perHour: hours>0 ? income/hours : 0,
+    count: inc.length+exp.length
   };
+}
+function payTypeLabel(id){
+  const t = PAY_TYPES.find(p=>p.id===id);
+  return t ? t.label : '';
 }
 
 /* ============================================================
-   RENDER — ROUTER
+   ROUTER
    ============================================================ */
 let currentView = 'dashboard';
-
+function setView(v){
+  currentView = v;
+  $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  render();
+  window.scrollTo(0,0);
+}
 function render(){
   const main = $('#main');
-  const scrollY = window.scrollY;
   switch(currentView){
     case 'dashboard': main.innerHTML = viewDashboard(); afterDashboard(); break;
     case 'income':    main.innerHTML = viewIncome();    afterIncome();    break;
@@ -430,15 +872,24 @@ function render(){
     case 'reports':   main.innerHTML = viewReports();   afterReports();   break;
     case 'data':      main.innerHTML = viewData();      afterData();      break;
   }
-  window.scrollTo(0, scrollY);
   renderBackupBanner();
 }
 
-function setView(v){
-  currentView = v;
-  $$('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
-  render();
-}
+/* ============================================================
+   ICONS
+   ============================================================ */
+const ICON = {
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  trash:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`,
+  up:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`,
+  down: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
+  swap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+  x:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  save: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  upload:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+  csv:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+};
 
 /* ============================================================
    VIEW — DASHBOARD
@@ -446,110 +897,121 @@ function setView(v){
 function viewDashboard(){
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-  const monthEnd   = todayISO() < monthStart ? monthStart : todayISO();
-  const thisMonth  = metricsFor(monthStart, monthEnd);
+  const monthEnd = todayISO() < monthStart ? monthStart : todayISO();
+  const thisMonth = metricsFor(monthStart, monthEnd);
 
-  const d30 = new Date(); d30.setDate(d30.getDate() - 29);
-  const from30 = `${d30.getFullYear()}-${String(d30.getMonth()+1).padStart(2,'0')}-${String(d30.getDate()).padStart(2,'0')}`;
+  const d30 = new Date(); d30.setDate(d30.getDate()-29);
+  const from30 = isoOf(d30);
   const last30 = metricsFor(from30, todayISO());
 
-  const firstEver = state.incomes.concat(state.expenses).map(x => x.date).sort()[0] || todayISO();
-  const allTime   = metricsFor(firstEver, todayISO());
+  const firstEver = state.incomes.concat(state.expenses).map(x=>x.date).sort()[0] || todayISO();
+  const allTime = metricsFor(firstEver, todayISO());
 
   const series = lastNMonths(12).map(monthTotals);
 
   const recent = []
-    .concat(state.incomes.map(i => ({type:'in',  date:i.date, label:i.source||'Income', amount:num(i.amount),  meta:payTypeLabel(i.payType)})))
-    .concat(state.expenses.map(e => ({type:'out', date:e.date, label:e.category||'Expense', amount:num(e.amount), meta:e.description||''})))
-    .sort((a,b) => b.date.localeCompare(a.date))
-    .slice(0,8);
+    .concat(state.incomes.map(i=>({type:'in',date:i.date,label:i.source||'Income',amount:num(i.amount),meta:payTypeLabel(i.payType)})))
+    .concat(state.expenses.map(e=>({type:'out',date:e.date,label:e.category||'Expense',amount:num(e.amount),meta:e.description||''})))
+    .sort((a,b)=>b.date.localeCompare(a.date))
+    .slice(0,6);
 
-  const balances = state.settings.accounts.map(a => ({ name:a, bal: accountBalance(a) }));
+  const balances = state.settings.accounts.map(a=>({name:a,bal:accountBalance(a)}));
 
   return `
-  <div class="grid g4" style="margin-bottom:.75rem">
-    ${statCard('Income this month', fmtMoney(thisMonth.totalIncome), `${thisMonth.incomeCount} entries`, 'pos')}
-    ${statCard('Expenses this month', fmtMoney(thisMonth.totalExpenses), `${thisMonth.expenseCount} entries`, 'neg')}
-    ${statCard('Net this month', fmtMoney(thisMonth.net), thisMonth.net >= 0 ? 'Surplus' : 'Deficit', thisMonth.net >= 0 ? 'pos' : 'neg')}
-    ${statCard('Effective hourly', thisMonth.hours > 0 ? fmtMoney(thisMonth.perHour) : '—', thisMonth.hours > 0 ? `${thisMonth.hours.toFixed(1)} hrs logged` : 'No hours logged', '')}
-  </div>
-
-  <div class="grid g4" style="margin-bottom:.75rem">
-    ${statCard('Last 30 days', fmtMoney(last30.totalIncome), `${last30.hours.toFixed(1)} hrs · ${last30.workDays} work days`, '')}
-    ${statCard('Per day (30d)', fmtMoney(last30.perDay), 'average earned per work day', '')}
-    ${statCard('Per week (30d)', fmtMoney(last30.perWeek), 'average weekly earnings', '')}
-    ${statCard('Annual pace', fmtMoney(last30.perYear), 'projected from last 30 days', '')}
-  </div>
-
-  <div class="card">
-    <div class="section-head"><h3 style="margin:0">Last 12 months</h3></div>
-    ${barChart(series)}
-    <div class="legend">
-      <span><i style="background:var(--accent)"></i> Income</span>
-      <span><i style="background:var(--danger)"></i> Expenses</span>
-    </div>
-  </div>
-
-  <div class="grid g2" style="margin-top:.75rem">
-    <div class="card">
-      <h3>Account balances</h3>
-      ${balances.map(b => `<div class="kv"><span>${esc(b.name)}</span><span class="${b.bal>=0?'':'neg'}">${fmtMoney(b.bal)}</span></div>`).join('')}
-      <div class="kv" style="border-top:1px solid var(--border);margin-top:.25rem;padding-top:.6rem;font-weight:600">
-        <span>Total</span><span>${fmtMoney(totalBalance())}</span>
+  <section class="section">
+    <div class="hero">
+      <div class="label">Total balance</div>
+      <div class="value">${fmtMoney(totalBalance())}</div>
+      <div class="meta">
+        ${balances.map(b=>`<span>${esc(b.name)}: <strong>${fmtMoney(b.bal)}</strong></span>`).join('')}
       </div>
     </div>
-    <div class="card">
-      <h3>All-time summary</h3>
-      <div class="kv"><span>Total income</span><span class="pos">${fmtMoney(allTime.totalIncome)}</span></div>
-      <div class="kv"><span>Total expenses</span><span class="neg">${fmtMoney(allTime.totalExpenses)}</span></div>
-      <div class="kv"><span>Net</span><span class="${allTime.net>=0?'pos':'neg'}">${fmtMoney(allTime.net)}</span></div>
-      <div class="kv"><span>Hours logged</span><span>${allTime.hours.toFixed(1)}</span></div>
-      <div class="kv"><span>Effective hourly</span><span>${allTime.hours>0?fmtMoney(allTime.perHour):'—'}</span></div>
-      <div class="kv"><span>Tracking since</span><span>${firstEver === todayISO() ? 'Today' : fmtDate(firstEver)}</span></div>
-    </div>
-  </div>
+  </section>
 
-  <div class="card" style="margin-top:.75rem">
+  <section class="section">
     <div class="section-head">
-      <h3 style="margin:0">Recent activity</h3>
-      <div style="display:flex;gap:.4rem">
-        <button class="btn btn-sm" data-add="income">+ Income</button>
-        <button class="btn btn-sm" data-add="expense">+ Expense</button>
+      <div>
+        <div class="section-title">This month</div>
+        <div class="section-sub">${monthLabelOf(monthKeyOf(monthStart))}</div>
+      </div>
+      <div class="flex" style="gap:6px">
+        <button class="btn btn-sm" data-add="income">${ICON.plus} Income</button>
+        <button class="btn btn-sm" data-add="expense">${ICON.plus} Expense</button>
       </div>
     </div>
-    ${recent.length === 0 ? `<div class="empty">No entries yet. Add your first income or expense above.</div>` : `
-      <div class="table-wrap"><table>
-        <thead><tr><th>Date</th><th>Type</th><th>Description</th><th class="num">Amount</th></tr></thead>
-        <tbody>
-          ${recent.map(r => `<tr>
-            <td>${fmtDate(r.date)}</td>
-            <td>${r.type==='in' ? '<span class="pill" style="color:var(--accent);border-color:rgba(61,220,151,.3)">Income</span>' : '<span class="pill" style="color:var(--danger);border-color:rgba(255,107,107,.3)">Expense</span>'}</td>
-            <td>${esc(r.label)}${r.meta ? ` <span class="muted small">· ${esc(r.meta)}</span>` : ''}</td>
-            <td class="num ${r.type==='in'?'pos':'neg'}">${r.type==='in'?'+':'−'}${fmtMoney(r.amount)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table></div>
-    `}
-  </div>
+    <div class="grid g4">
+      ${stat('Income',   fmtMoney(thisMonth.totalIncome),   `${thisMonth.incomeCount} entries`, 'pos')}
+      ${stat('Expenses', fmtMoney(thisMonth.totalExpenses), `${thisMonth.expenseCount} entries`, 'neg')}
+      ${stat('Net',      fmtMoney(thisMonth.net), thisMonth.net>=0?'Surplus':'Deficit', thisMonth.net>=0?'pos':'neg')}
+      ${stat('Per hour', thisMonth.hours>0?fmtMoney(thisMonth.perHour):'—', thisMonth.hours>0?`${thisMonth.hours.toFixed(1)} hrs`:'No hours', '')}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title" style="margin-bottom:14px">Earnings pace</div>
+    <div class="grid g4">
+      ${stat('Per day',  fmtMoney(last30.perDay),   `${last30.workDays} work days`,'')}
+      ${stat('Per week', fmtMoney(last30.perWeek),  'last 30 days avg','')}
+      ${stat('Per month',fmtMoney(last30.perMonth), 'last 30 days avg','')}
+      ${stat('Per year', fmtMoney(last30.perYear),  'projected','')}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <div class="section-head" style="margin-bottom:14px">
+        <div class="section-title">Last 12 months</div>
+      </div>
+      ${barChart(series)}
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i> Income</span>
+        <span><i style="background:#fca5a5"></i> Expenses</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="grid g2">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">All-time summary</div>
+        <div class="kv"><span class="k">Total income</span><span class="v pos">${fmtMoney(allTime.totalIncome)}</span></div>
+        <div class="kv"><span class="k">Total expenses</span><span class="v neg">${fmtMoney(allTime.totalExpenses)}</span></div>
+        <div class="kv"><span class="k">Net</span><span class="v ${allTime.net>=0?'pos':'neg'}">${fmtMoney(allTime.net)}</span></div>
+        <div class="kv"><span class="k">Hours logged</span><span class="v">${allTime.hours.toFixed(1)}</span></div>
+        <div class="kv"><span class="k">Effective hourly</span><span class="v">${allTime.hours>0?fmtMoney(allTime.perHour):'—'}</span></div>
+      </div>
+      <div class="card">
+        <div class="section-head" style="margin-bottom:8px">
+          <div class="section-title">Recent activity</div>
+        </div>
+        ${recent.length===0 ? `<div class="muted small" style="padding:16px 0">Nothing yet. Add your first entry above.</div>` : `
+        <ul class="activity">
+          ${recent.map(r=>`
+            <li>
+              <div class="badge ${r.type}">${r.type==='in'?ICON.up:ICON.down}</div>
+              <div class="body">
+                <div class="title">${esc(r.label)}</div>
+                <div class="meta">${fmtDate(r.date)}${r.meta?' · '+esc(r.meta):''}</div>
+              </div>
+              <div class="amount ${r.type==='in'?'pos':'neg'}">${r.type==='in'?'+':'−'}${fmtMoney(r.amount)}</div>
+            </li>
+          `).join('')}
+        </ul>`}
+      </div>
+    </div>
+  </section>
   `;
 }
-
-function statCard(label, value, sub, cls){
+function stat(label, value, sub, cls){
   return `<div class="stat">
     <div class="label">${esc(label)}</div>
     <div class="value ${cls||''}">${value}</div>
-    ${sub ? `<div class="sub">${esc(sub)}</div>` : ''}
+    ${sub?`<div class="sub">${esc(sub)}</div>`:''}
   </div>`;
 }
-
-function payTypeLabel(id){
-  const t = PAY_TYPES.find(p => p.id === id);
-  return t ? t.label : '';
-}
-
 function afterDashboard(){
-  $$('[data-add]').forEach(b => b.onclick = () => {
-    if(b.dataset.add === 'income') openIncomeModal(null);
+  $$('[data-add]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.add==='income') openIncomeModal(null);
     else openExpenseModal(null);
   });
 }
@@ -558,183 +1020,178 @@ function afterDashboard(){
    CHART
    ============================================================ */
 function barChart(series){
-  const W = 720, H = 240, PL = 52, PR = 12, PT = 16, PB = 36;
-  const iw = W - PL - PR, ih = H - PT - PB;
-  const max = Math.max(1, ...series.map(s => Math.max(s.income, s.expenses)));
-  const bw = iw / series.length;
-  const half = Math.min(bw * 0.32, 18);
-
-  let grid = '';
-  for(let g = 0; g <= 4; g++){
-    const y = PT + ih - (g/4) * ih;
-    grid += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
-    grid += `<text x="${PL-6}" y="${y+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)">${fmtMoney0(max*g/4)}</text>`;
+  const W=760, H=220, PL=48, PR=8, PT=12, PB=32;
+  const iw=W-PL-PR, ih=H-PT-PB;
+  const max=Math.max(1, ...series.map(s=>Math.max(s.income,s.expenses)));
+  const bw=iw/series.length;
+  const half=Math.min(bw*0.32,16);
+  let grid='';
+  for(let g=0;g<=3;g++){
+    const y=PT+ih-(g/3)*ih;
+    grid+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#eaecf0" stroke-width="1"/>`;
+    grid+=`<text x="${PL-8}" y="${y+3.5}" text-anchor="end" font-size="10" fill="#98a2b3">${fmtMoney0(max*g/3)}</text>`;
   }
-
-  let bars = '';
-  series.forEach((s, i) => {
-    const x = PL + i * bw + bw/2;
-    const ihh = (s.income   / max) * ih;
-    const ehh = (s.expenses / max) * ih;
-    if(ihh > 0) bars += `<rect x="${x-half-1}" y="${PT+ih-ihh}" width="${half}" height="${ihh}" fill="var(--accent)" rx="2"><title>${monthLabelOf(s.key)} income: ${fmtMoney(s.income)}</title></rect>`;
-    if(ehh > 0) bars += `<rect x="${x+1}" y="${PT+ih-ehh}" width="${half}" height="${ehh}" fill="var(--danger)" rx="2"><title>${monthLabelOf(s.key)} expenses: ${fmtMoney(s.expenses)}</title></rect>`;
-    bars += `<text x="${x}" y="${H-14}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${monthLabelOf(s.key).split(' ')[0]}</text>`;
+  let bars='';
+  series.forEach((s,i)=>{
+    const x=PL+i*bw+bw/2;
+    const ihh=(s.income/max)*ih;
+    const ehh=(s.expenses/max)*ih;
+    if(ihh>0) bars+=`<rect x="${x-half-1}" y="${PT+ih-ihh}" width="${half}" height="${ihh}" fill="#10b981" rx="3"><title>${monthLabelOf(s.key)} income: ${fmtMoney(s.income)}</title></rect>`;
+    if(ehh>0) bars+=`<rect x="${x+1}" y="${PT+ih-ehh}" width="${half}" height="${ehh}" fill="#fca5a5" rx="3"><title>${monthLabelOf(s.key)} expenses: ${fmtMoney(s.expenses)}</title></rect>`;
+    bars+=`<text x="${x}" y="${H-10}" text-anchor="middle" font-size="10" fill="#98a2b3">${monthLabelOf(s.key).split(' ')[0]}</text>`;
   });
-
   return `<svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg>`;
 }
 
 /* ============================================================
    VIEW — INCOME
    ============================================================ */
-let incomeFilters = { from:'', to:'', q:'' };
-
+let incomeFilters={from:'',to:'',q:''};
 function viewIncome(){
   const list = filteredIncomes();
-  const total = list.reduce((s,i) => s + num(i.amount), 0);
-  const hours = list.reduce((s,i) => s + num(i.hours), 0);
-
+  const total = list.reduce((s,i)=>s+num(i.amount),0);
+  const hours = list.reduce((s,i)=>s+num(i.hours),0);
   return `
-  <div class="section-head">
-    <div>
-      <h2 style="margin:0">Income</h2>
-      <div class="muted small">${list.length} entries · ${fmtMoney(total)}${hours>0?` · ${hours.toFixed(1)} hrs`:''}</div>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="page-title">Income</div>
+        <div class="page-sub">${list.length} entries · ${fmtMoney(total)}${hours>0?` · ${hours.toFixed(1)} hrs`:''}</div>
+      </div>
+      <button class="btn btn-primary" id="addIncome">${ICON.plus} Add income</button>
     </div>
-    <button class="btn btn-primary" id="addIncome">+ Add income</button>
-  </div>
 
-  <div class="filters">
-    <div class="field"><label>From</label><input type="date" id="fIncFrom" value="${incomeFilters.from}"></div>
-    <div class="field"><label>To</label><input type="date" id="fIncTo" value="${incomeFilters.to}"></div>
-    <div class="field grow"><label>Search</label><input type="text" id="fIncQ" placeholder="Source or notes…" value="${esc(incomeFilters.q)}"></div>
-    <button class="btn btn-sm" id="fIncClear">Clear</button>
-  </div>
+    <div class="filters">
+      <div class="field"><label>From</label><input type="date" id="fIncFrom" value="${incomeFilters.from}"></div>
+      <div class="field"><label>To</label><input type="date" id="fIncTo" value="${incomeFilters.to}"></div>
+      <div class="field grow"><label>Search</label><input type="text" id="fIncQ" placeholder="Source or notes" value="${esc(incomeFilters.q)}"></div>
+      <div class="actions"><button class="btn btn-sm" id="fIncClear">Clear</button></div>
+    </div>
 
-  ${list.length === 0 ? `<div class="card empty">No income entries match. Try clearing filters, or add a new entry.</div>` : `
-  <div class="table-wrap"><table>
-    <thead><tr>
-      <th>Date</th><th>Source</th><th>Type</th>
-      <th class="num">Qty</th><th class="num">Rate</th><th class="num">Hours</th>
-      <th class="num">Amount</th><th>Account</th><th></th>
-    </tr></thead>
-    <tbody>
-      ${list.map(i => `<tr>
-        <td>${fmtDate(i.date)}</td>
-        <td>${esc(i.source||'—')}</td>
-        <td><span class="pill">${payTypeLabel(i.payType)}</span></td>
-        <td class="num">${i.quantity ? num(i.quantity) : '—'}</td>
-        <td class="num">${i.rate ? fmtMoney(i.rate) : '—'}</td>
-        <td class="num">${i.hours ? num(i.hours).toFixed(2) : '—'}</td>
-        <td class="num pos">${fmtMoney(i.amount)}</td>
-        <td>${esc(i.account||'')}</td>
-        <td class="actions">
-          <button class="icon-btn" data-edit-inc="${i.id}" title="Edit">✎</button>
-          <button class="icon-btn" data-del-inc="${i.id}" title="Delete">✕</button>
-        </td>
-      </tr>`).join('')}
-    </tbody>
-  </table></div>`}
-  `;
+    ${list.length===0 ? `<div class="empty"><strong>No income entries</strong>Add your first income, or clear the filters.<button class="btn btn-primary" id="addIncome2">${ICON.plus} Add income</button></div>` : `
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Date</th><th>Source</th><th>Type</th>
+        <th class="num">Qty</th><th class="num">Rate</th><th class="num">Hours</th>
+        <th class="num">Amount</th><th>Account</th><th class="actions"></th>
+      </tr></thead>
+      <tbody>
+        ${list.map(i=>`<tr>
+          <td>${fmtDate(i.date)}</td>
+          <td>${esc(i.source||'—')}</td>
+          <td><span class="pill">${payTypeLabel(i.payType)}</span></td>
+          <td class="num">${i.quantity?num(i.quantity):'—'}</td>
+          <td class="num">${i.rate?fmtMoney(i.rate):'—'}</td>
+          <td class="num">${i.hours?num(i.hours).toFixed(2):'—'}</td>
+          <td class="num pos">+${fmtMoney(i.amount)}</td>
+          <td class="muted">${esc(i.account||'')}</td>
+          <td class="actions"><div class="row-actions">
+            <button class="icon-btn-sm" data-edit-inc="${i.id}" title="Edit">${ICON.edit}</button>
+            <button class="icon-btn-sm danger" data-del-inc="${i.id}" title="Delete">${ICON.trash}</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`}
+  </section>`;
 }
-
 function filteredIncomes(){
-  let list = state.incomes.slice();
-  if(incomeFilters.from) list = list.filter(i => i.date >= incomeFilters.from);
-  if(incomeFilters.to)   list = list.filter(i => i.date <= incomeFilters.to);
+  let list=state.incomes.slice();
+  if(incomeFilters.from) list=list.filter(i=>i.date>=incomeFilters.from);
+  if(incomeFilters.to)   list=list.filter(i=>i.date<=incomeFilters.to);
   if(incomeFilters.q){
-    const q = incomeFilters.q.toLowerCase();
-    list = list.filter(i => (i.source||'').toLowerCase().includes(q) || (i.notes||'').toLowerCase().includes(q));
+    const q=incomeFilters.q.toLowerCase();
+    list=list.filter(i=>(i.source||'').toLowerCase().includes(q)||(i.notes||'').toLowerCase().includes(q));
   }
-  return list.sort((a,b) => b.date.localeCompare(a.date) || (b.createdAt||'').localeCompare(a.createdAt||''));
+  return list.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||'').localeCompare(a.createdAt||''));
 }
-
 function afterIncome(){
-  $('#addIncome').onclick = () => openIncomeModal(null);
-  $('#fIncFrom').onchange = e => { incomeFilters.from = e.target.value; render(); };
-  $('#fIncTo').onchange   = e => { incomeFilters.to   = e.target.value; render(); };
-  $('#fIncQ').oninput     = e => { incomeFilters.q    = e.target.value; render(); };
-  $('#fIncClear').onclick = () => { incomeFilters = {from:'',to:'',q:''}; render(); };
-  $$('[data-edit-inc]').forEach(b => b.onclick = () => openIncomeModal(b.dataset.editInc));
-  $$('[data-del-inc]').forEach(b => b.onclick = () => confirmDelete('income', b.dataset.delInc));
+  const add = ()=>openIncomeModal(null);
+  if($('#addIncome'))  $('#addIncome').onclick  = add;
+  if($('#addIncome2')) $('#addIncome2').onclick = add;
+  $('#fIncFrom').onchange=e=>{incomeFilters.from=e.target.value; render();};
+  $('#fIncTo').onchange  =e=>{incomeFilters.to=e.target.value;   render();};
+  $('#fIncQ').oninput    =e=>{incomeFilters.q=e.target.value;    render();};
+  $('#fIncClear').onclick=()=>{incomeFilters={from:'',to:'',q:''}; render();};
+  $$('[data-edit-inc]').forEach(b=>b.onclick=()=>openIncomeModal(b.dataset.editInc));
+  $$('[data-del-inc]').forEach(b=>b.onclick=()=>confirmDelete('income', b.dataset.delInc));
 }
 
 /* ============================================================
    VIEW — EXPENSES
    ============================================================ */
-let expenseFilters = { from:'', to:'', q:'', cat:'' };
-
+let expenseFilters={from:'',to:'',q:'',cat:''};
 function viewExpenses(){
   const list = filteredExpenses();
-  const total = list.reduce((s,e) => s + num(e.amount), 0);
-  const essential = list.filter(e => e.essential).reduce((s,e) => s + num(e.amount), 0);
-
+  const total = list.reduce((s,e)=>s+num(e.amount),0);
+  const essential = list.filter(e=>e.essential).reduce((s,e)=>s+num(e.amount),0);
   return `
-  <div class="section-head">
-    <div>
-      <h2 style="margin:0">Expenses</h2>
-      <div class="muted small">${list.length} entries · ${fmtMoney(total)} · essentials ${fmtMoney(essential)}</div>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="page-title">Expenses</div>
+        <div class="page-sub">${list.length} entries · ${fmtMoney(total)} · essentials ${fmtMoney(essential)}</div>
+      </div>
+      <button class="btn btn-primary" id="addExpense">${ICON.plus} Add expense</button>
     </div>
-    <button class="btn btn-primary" id="addExpense">+ Add expense</button>
-  </div>
 
-  <div class="filters">
-    <div class="field"><label>From</label><input type="date" id="fExpFrom" value="${expenseFilters.from}"></div>
-    <div class="field"><label>To</label><input type="date" id="fExpTo" value="${expenseFilters.to}"></div>
-    <div class="field"><label>Category</label>
-      <select id="fExpCat">
-        <option value="">All</option>
-        ${state.settings.expenseCategories.map(c => `<option ${expenseFilters.cat===c?'selected':''}>${esc(c)}</option>`).join('')}
-      </select>
+    <div class="filters">
+      <div class="field"><label>From</label><input type="date" id="fExpFrom" value="${expenseFilters.from}"></div>
+      <div class="field"><label>To</label><input type="date" id="fExpTo" value="${expenseFilters.to}"></div>
+      <div class="field"><label>Category</label>
+        <select id="fExpCat">
+          <option value="">All</option>
+          ${state.settings.expenseCategories.map(c=>`<option ${expenseFilters.cat===c?'selected':''}>${esc(c)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Search</label><input type="text" id="fExpQ" placeholder="Description" value="${esc(expenseFilters.q)}"></div>
+      <div class="actions"><button class="btn btn-sm" id="fExpClear">Clear</button></div>
     </div>
-    <div class="field grow"><label>Search</label><input type="text" id="fExpQ" placeholder="Description…" value="${esc(expenseFilters.q)}"></div>
-    <button class="btn btn-sm" id="fExpClear">Clear</button>
-  </div>
 
-  ${list.length === 0 ? `<div class="card empty">No expense entries match. Try clearing filters, or add a new entry.</div>` : `
-  <div class="table-wrap"><table>
-    <thead><tr>
-      <th>Date</th><th>Category</th><th>Description</th>
-      <th class="num">Amount</th><th>Account</th><th>Essential</th><th></th>
-    </tr></thead>
-    <tbody>
-      ${list.map(e => `<tr>
-        <td>${fmtDate(e.date)}</td>
-        <td>${esc(e.category||'—')}</td>
-        <td>${esc(e.description||'')}</td>
-        <td class="num neg">${fmtMoney(e.amount)}</td>
-        <td>${esc(e.account||'')}</td>
-        <td>${e.essential ? '<span class="pill essential">Yes</span>' : '<span class="muted small">—</span>'}</td>
-        <td class="actions">
-          <button class="icon-btn" data-edit-exp="${e.id}" title="Edit">✎</button>
-          <button class="icon-btn" data-del-exp="${e.id}" title="Delete">✕</button>
-        </td>
-      </tr>`).join('')}
-    </tbody>
-  </table></div>`}
-  `;
+    ${list.length===0 ? `<div class="empty"><strong>No expense entries</strong>Add your first expense, or clear the filters.<button class="btn btn-primary" id="addExpense2">${ICON.plus} Add expense</button></div>` : `
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Date</th><th>Category</th><th>Description</th>
+        <th class="num">Amount</th><th>Account</th><th>Essential</th><th class="actions"></th>
+      </tr></thead>
+      <tbody>
+        ${list.map(e=>`<tr>
+          <td>${fmtDate(e.date)}</td>
+          <td>${esc(e.category||'—')}</td>
+          <td class="muted">${esc(e.description||'')}</td>
+          <td class="num neg">−${fmtMoney(e.amount)}</td>
+          <td class="muted">${esc(e.account||'')}</td>
+          <td>${e.essential?'<span class="pill success">Yes</span>':'<span class="subtle small">—</span>'}</td>
+          <td class="actions"><div class="row-actions">
+            <button class="icon-btn-sm" data-edit-exp="${e.id}" title="Edit">${ICON.edit}</button>
+            <button class="icon-btn-sm danger" data-del-exp="${e.id}" title="Delete">${ICON.trash}</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`}
+  </section>`;
 }
-
 function filteredExpenses(){
-  let list = state.expenses.slice();
-  if(expenseFilters.from) list = list.filter(e => e.date >= expenseFilters.from);
-  if(expenseFilters.to)   list = list.filter(e => e.date <= expenseFilters.to);
-  if(expenseFilters.cat)  list = list.filter(e => e.category === expenseFilters.cat);
+  let list=state.expenses.slice();
+  if(expenseFilters.from) list=list.filter(e=>e.date>=expenseFilters.from);
+  if(expenseFilters.to)   list=list.filter(e=>e.date<=expenseFilters.to);
+  if(expenseFilters.cat)  list=list.filter(e=>e.category===expenseFilters.cat);
   if(expenseFilters.q){
-    const q = expenseFilters.q.toLowerCase();
-    list = list.filter(e => (e.description||'').toLowerCase().includes(q) || (e.category||'').toLowerCase().includes(q));
+    const q=expenseFilters.q.toLowerCase();
+    list=list.filter(e=>(e.description||'').toLowerCase().includes(q)||(e.category||'').toLowerCase().includes(q));
   }
-  return list.sort((a,b) => b.date.localeCompare(a.date) || (b.createdAt||'').localeCompare(a.createdAt||''));
+  return list.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||'').localeCompare(a.createdAt||''));
 }
-
 function afterExpenses(){
-  $('#addExpense').onclick = () => openExpenseModal(null);
-  $('#fExpFrom').onchange = e => { expenseFilters.from = e.target.value; render(); };
-  $('#fExpTo').onchange   = e => { expenseFilters.to   = e.target.value; render(); };
-  $('#fExpCat').onchange  = e => { expenseFilters.cat  = e.target.value; render(); };
-  $('#fExpQ').oninput     = e => { expenseFilters.q    = e.target.value; render(); };
-  $('#fExpClear').onclick = () => { expenseFilters = {from:'',to:'',q:'',cat:''}; render(); };
-  $$('[data-edit-exp]').forEach(b => b.onclick = () => openExpenseModal(b.dataset.editExp));
-  $$('[data-del-exp]').forEach(b => b.onclick = () => confirmDelete('expense', b.dataset.delExp));
+  const add=()=>openExpenseModal(null);
+  if($('#addExpense'))  $('#addExpense').onclick =add;
+  if($('#addExpense2')) $('#addExpense2').onclick=add;
+  $('#fExpFrom').onchange=e=>{expenseFilters.from=e.target.value; render();};
+  $('#fExpTo').onchange  =e=>{expenseFilters.to=e.target.value;   render();};
+  $('#fExpCat').onchange =e=>{expenseFilters.cat=e.target.value;  render();};
+  $('#fExpQ').oninput    =e=>{expenseFilters.q=e.target.value;    render();};
+  $('#fExpClear').onclick=()=>{expenseFilters={from:'',to:'',q:'',cat:''}; render();};
+  $$('[data-edit-exp]').forEach(b=>b.onclick=()=>openExpenseModal(b.dataset.editExp));
+  $$('[data-del-exp]').forEach(b=>b.onclick=()=>confirmDelete('expense', b.dataset.delExp));
 }
 
 /* ============================================================
@@ -742,64 +1199,66 @@ function afterExpenses(){
    ============================================================ */
 function viewAccounts(){
   const accounts = state.settings.accounts;
-  const transfers = state.transfers.slice().sort((a,b) => b.date.localeCompare(a.date));
-
-  const flowRows = accounts.map(a => {
-    const inc = state.incomes.filter(i => i.account === a).reduce((s,i) => s + num(i.amount), 0);
-    const exp = state.expenses.filter(e => e.account === a).reduce((s,e) => s + num(e.amount), 0);
-    const tin = state.transfers.filter(t => t.to === a).reduce((s,t) => s + num(t.amount), 0);
-    const tout= state.transfers.filter(t => t.from === a).reduce((s,t) => s + num(t.amount), 0);
-    return { name:a, opening:num(state.openingBalances[a]), inc, exp, tin, tout, bal: accountBalance(a) };
+  const transfers = state.transfers.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const rows = accounts.map(a=>{
+    const inc=state.incomes.filter(i=>i.account===a).reduce((s,i)=>s+num(i.amount),0);
+    const exp=state.expenses.filter(e=>e.account===a).reduce((s,e)=>s+num(e.amount),0);
+    const tin=state.transfers.filter(t=>t.to===a).reduce((s,t)=>s+num(t.amount),0);
+    const tout=state.transfers.filter(t=>t.from===a).reduce((s,t)=>s+num(t.amount),0);
+    return {name:a,opening:num(state.openingBalances[a]),inc,exp,tin,tout,bal:accountBalance(a)};
   });
-
   return `
-  <div class="section-head">
-    <div>
-      <h2 style="margin:0">Accounts</h2>
-      <div class="muted small">Total across all accounts: <strong>${fmtMoney(totalBalance())}</strong></div>
-    </div>
-    <button class="btn btn-primary" id="addTransfer">+ Transfer</button>
-  </div>
-
-  <div class="grid g3">
-    ${flowRows.map(r => `
-      <div class="card">
-        <h3>${esc(r.name)}</h3>
-        <div class="value" style="font-size:24px;font-weight:600;${r.bal<0?'color:var(--danger)':''}">${fmtMoney(r.bal)}</div>
-        <div class="divider"></div>
-        <div class="kv"><span>Opening</span><span>${fmtMoney(r.opening)}</span></div>
-        <div class="kv"><span>Income in</span><span class="pos">+${fmtMoney(r.inc)}</span></div>
-        <div class="kv"><span>Expenses out</span><span class="neg">−${fmtMoney(r.exp)}</span></div>
-        <div class="kv"><span>Transfers in</span><span class="pos">+${fmtMoney(r.tin)}</span></div>
-        <div class="kv"><span>Transfers out</span><span class="neg">−${fmtMoney(r.tout)}</span></div>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="page-title">Accounts</div>
+        <div class="page-sub">Total: ${fmtMoney(totalBalance())}</div>
       </div>
-    `).join('')}
-  </div>
+      <button class="btn btn-primary" id="addTransfer">${ICON.swap} Transfer</button>
+    </div>
+    <div class="grid g3">
+      ${rows.map(r=>`
+        <div class="card">
+          <div class="section-sub" style="text-transform:none;margin-bottom:8px">${esc(r.name)}</div>
+          <div class="value" style="font-size:26px;font-weight:600;${r.bal<0?'color:var(--danger)':''}">${fmtMoney(r.bal)}</div>
+          <div class="divider"></div>
+          <div class="kv"><span class="k">Opening</span><span class="v">${fmtMoney(r.opening)}</span></div>
+          <div class="kv"><span class="k">Income in</span><span class="v pos">+${fmtMoney(r.inc)}</span></div>
+          <div class="kv"><span class="k">Expenses out</span><span class="v neg">−${fmtMoney(r.exp)}</span></div>
+          <div class="kv"><span class="k">Transfers in</span><span class="v pos">+${fmtMoney(r.tin)}</span></div>
+          <div class="kv"><span class="k">Transfers out</span><span class="v neg">−${fmtMoney(r.tout)}</span></div>
+        </div>
+      `).join('')}
+    </div>
+  </section>
 
-  <div class="card" style="margin-top:.75rem">
-    <h3>Transfers between accounts</h3>
-    ${transfers.length === 0 ? `<div class="empty">No transfers recorded. Use transfers to move money from Holding → Operating as your monthly paycheck.</div>` : `
+  <section class="section">
+    <div class="section-head">
+      <div class="section-title">Transfers</div>
+    </div>
+    ${transfers.length===0 ? `<div class="empty"><strong>No transfers yet</strong>Use transfers to pay yourself a fixed amount each month from your Holding to Operating account.</div>` : `
     <div class="table-wrap"><table>
-      <thead><tr><th>Date</th><th>From</th><th>To</th><th class="num">Amount</th><th>Notes</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>From</th><th>To</th><th class="num">Amount</th><th>Notes</th><th class="actions"></th></tr></thead>
       <tbody>
-        ${transfers.map(t => `<tr>
+        ${transfers.map(t=>`<tr>
           <td>${fmtDate(t.date)}</td>
           <td>${esc(t.from)}</td>
           <td>${esc(t.to)}</td>
           <td class="num">${fmtMoney(t.amount)}</td>
-          <td>${esc(t.notes||'')}</td>
-          <td class="actions"><button class="icon-btn" data-del-tr="${t.id}" title="Delete">✕</button></td>
+          <td class="muted">${esc(t.notes||'')}</td>
+          <td class="actions"><div class="row-actions">
+            <button class="icon-btn-sm danger" data-del-tr="${t.id}" title="Delete">${ICON.trash}</button>
+          </div></td>
         </tr>`).join('')}
       </tbody>
     </table></div>`}
-  </div>
-  `;
+  </section>`;
 }
-
 function afterAccounts(){
   $('#addTransfer').onclick = openTransferModal;
-  $$('[data-del-tr]').forEach(b => b.onclick = () => {
-    state.transfers = state.transfers.filter(t => t.id !== b.dataset.delTr);
+  $$('[data-del-tr]').forEach(b=>b.onclick=()=>{
+    if(!confirm('Delete this transfer?')) return;
+    state.transfers = state.transfers.filter(t=>t.id!==b.dataset.delTr);
     save(); render(); toast('Transfer deleted');
   });
 }
@@ -807,99 +1266,98 @@ function afterAccounts(){
 /* ============================================================
    VIEW — REPORTS
    ============================================================ */
-let reportRange = { mode:'month' };
-
+let reportRange={mode:'month'};
 function viewReports(){
-  const { from, to, label } = reportRangeDates();
-
-  const m = metricsFor(from, to);
+  const {from,to,label} = reportRangeDates();
+  const m = metricsFor(from,to);
   const series = lastNMonths(12).map(monthTotals);
-
-  const monthRows = lastNMonths(24).reverse().map(monthTotals).filter(r => r.count > 0 || r.income > 0 || r.expenses > 0);
-
-  // Category breakdown for the range
-  const expInRange = state.expenses.filter(e => e.date >= from && e.date <= to);
-  const byCat = {};
-  expInRange.forEach(e => { byCat[e.category||'Other'] = (byCat[e.category||'Other']||0) + num(e.amount); });
-  const catRows = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
-
-  const incInRange = state.incomes.filter(i => i.date >= from && i.date <= to);
-  const bySource = {};
-  incInRange.forEach(i => { bySource[i.source||'Other'] = (bySource[i.source||'Other']||0) + num(i.amount); });
-  const srcRows = Object.entries(bySource).sort((a,b) => b[1]-a[1]);
+  const monthRows = lastNMonths(24).reverse().map(monthTotals).filter(r=>r.count>0||r.income>0||r.expenses>0);
+  const expInRange = state.expenses.filter(e=>e.date>=from&&e.date<=to);
+  const byCat={};
+  expInRange.forEach(e=>{byCat[e.category||'Other']=(byCat[e.category||'Other']||0)+num(e.amount);});
+  const catRows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const incInRange = state.incomes.filter(i=>i.date>=from&&i.date<=to);
+  const bySource={};
+  incInRange.forEach(i=>{bySource[i.source||'Other']=(bySource[i.source||'Other']||0)+num(i.amount);});
+  const srcRows=Object.entries(bySource).sort((a,b)=>b[1]-a[1]);
 
   return `
-  <div class="section-head">
-    <div><h2 style="margin:0">Reports</h2><div class="muted small">${esc(label)} · ${fmtDate(from)} → ${fmtDate(to)}</div></div>
-  </div>
-
-  <div class="filters">
-    <div class="field">
-      <label>Range</label>
-      <select id="repMode">
-        <option value="month"  ${reportRange.mode==='month'?'selected':''}>This month</option>
-        <option value="30d"    ${reportRange.mode==='30d'?'selected':''}>Last 30 days</option>
-        <option value="90d"    ${reportRange.mode==='90d'?'selected':''}>Last 90 days</option>
-        <option value="ytd"    ${reportRange.mode==='ytd'?'selected':''}>Year to date</option>
-        <option value="year"   ${reportRange.mode==='year'?'selected':''}>Last 12 months</option>
-        <option value="all"    ${reportRange.mode==='all'?'selected':''}>All time</option>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="page-title">Reports</div>
+        <div class="page-sub">${esc(label)} · ${fmtDate(from)} → ${fmtDate(to)}</div>
+      </div>
+      <select id="repMode" style="width:auto;height:38px;font-size:13.5px;padding:0 34px 0 14px">
+        <option value="month" ${reportRange.mode==='month'?'selected':''}>This month</option>
+        <option value="30d"   ${reportRange.mode==='30d'?'selected':''}>Last 30 days</option>
+        <option value="90d"   ${reportRange.mode==='90d'?'selected':''}>Last 90 days</option>
+        <option value="ytd"   ${reportRange.mode==='ytd'?'selected':''}>Year to date</option>
+        <option value="year"  ${reportRange.mode==='year'?'selected':''}>Last 12 months</option>
+        <option value="all"   ${reportRange.mode==='all'?'selected':''}>All time</option>
       </select>
     </div>
-  </div>
+  </section>
 
-  <div class="grid g4" style="margin-bottom:.75rem">
-    ${statCard('Total income', fmtMoney(m.totalIncome), `${m.incomeCount} entries`, 'pos')}
-    ${statCard('Total expenses', fmtMoney(m.totalExpenses), `${m.expenseCount} entries`, 'neg')}
-    ${statCard('Net', fmtMoney(m.net), m.net>=0?'Surplus':'Deficit', m.net>=0?'pos':'neg')}
-    ${statCard('Hours logged', m.hours.toFixed(1), `${m.workDays} work days`, '')}
-  </div>
-
-  <div class="card">
-    <h3>Normalised earnings</h3>
-    <div class="grid g3" style="margin-top:.5rem">
-      ${statCard('Per hour',   m.hours>0?fmtMoney(m.perHour):'—',   m.hours>0?`based on ${m.hours.toFixed(1)} hrs`:'log hours to see this', '')}
-      ${statCard('Per work day', fmtMoney(m.perDay), `${m.workDays} days with income`, '')}
-      ${statCard('Per week',   fmtMoney(m.perWeek), 'over the selected range', '')}
-      ${statCard('Per month',  fmtMoney(m.perMonth), 'averaged', '')}
-      ${statCard('Per year',   fmtMoney(m.perYear), 'projected from range', '')}
-      ${statCard('Hours coverage', (m.hoursCoverage*100).toFixed(0)+'%', 'share of income with hours logged', m.hoursCoverage>0.8?'pos':(m.hoursCoverage>0.4?'warn':'neg'))}
+  <section class="section">
+    <div class="grid g4">
+      ${stat('Income',   fmtMoney(m.totalIncome),   `${m.incomeCount} entries`,'pos')}
+      ${stat('Expenses', fmtMoney(m.totalExpenses), `${m.expenseCount} entries`,'neg')}
+      ${stat('Net',      fmtMoney(m.net), m.net>=0?'Surplus':'Deficit', m.net>=0?'pos':'neg')}
+      ${stat('Hours',    m.hours.toFixed(1), `${m.workDays} work days`,'')}
     </div>
-  </div>
+  </section>
 
-  <div class="card" style="margin-top:.75rem">
-    <h3>Income vs expenses — last 12 months</h3>
-    ${barChart(series)}
-    <div class="legend">
-      <span><i style="background:var(--accent)"></i> Income</span>
-      <span><i style="background:var(--danger)"></i> Expenses</span>
+  <section class="section">
+    <div class="section-title" style="margin-bottom:14px">Normalised earnings</div>
+    <div class="grid g3">
+      ${stat('Per hour',    m.hours>0?fmtMoney(m.perHour):'—', m.hours>0?`${m.hours.toFixed(1)} hrs logged`:'log hours to see','')}
+      ${stat('Per work day',fmtMoney(m.perDay),                 `${m.workDays} days with income`,'')}
+      ${stat('Per week',    fmtMoney(m.perWeek),                'over the selected range','')}
+      ${stat('Per month',   fmtMoney(m.perMonth),               'averaged','')}
+      ${stat('Per year',    fmtMoney(m.perYear),                'projected from range','')}
+      ${stat('Hours coverage',(m.hoursCoverage*100).toFixed(0)+'%','share of income with hours',m.hoursCoverage>0.8?'pos':(m.hoursCoverage>0.4?'warnc':'neg'))}
     </div>
-  </div>
+  </section>
 
-  <div class="grid g2" style="margin-top:.75rem">
+  <section class="section">
     <div class="card">
-      <h3>Income by source</h3>
-      ${srcRows.length === 0 ? `<div class="empty">No income in this range.</div>` : srcRows.map(([k,v]) => `
-        <div class="kv"><span>${esc(k)}</span><span>${fmtMoney(v)} <span class="muted small">(${((v/m.totalIncome)*100).toFixed(0)}%)</span></span></div>
-      `).join('')}
+      <div class="section-title" style="margin-bottom:14px">Last 12 months</div>
+      ${barChart(series)}
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i> Income</span>
+        <span><i style="background:#fca5a5"></i> Expenses</span>
+      </div>
     </div>
-    <div class="card">
-      <h3>Expenses by category</h3>
-      ${catRows.length === 0 ? `<div class="empty">No expenses in this range.</div>` : catRows.map(([k,v]) => `
-        <div class="kv"><span>${esc(k)}</span><span>${fmtMoney(v)} <span class="muted small">(${((v/m.totalExpenses)*100).toFixed(0)}%)</span></span></div>
-      `).join('')}
-    </div>
-  </div>
+  </section>
 
-  <div class="card" style="margin-top:.75rem">
-    <h3>Monthly breakdown</h3>
-    ${monthRows.length === 0 ? `<div class="empty">No data yet.</div>` : `
+  <section class="section">
+    <div class="grid g2">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">Income by source</div>
+        ${srcRows.length===0 ? `<div class="muted small">No income in this range.</div>` : srcRows.map(([k,v])=>`
+          <div class="kv"><span class="k">${esc(k)}</span><span class="v">${fmtMoney(v)}<span class="pct">${((v/m.totalIncome)*100).toFixed(0)}%</span></span></div>
+        `).join('')}
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">Expenses by category</div>
+        ${catRows.length===0 ? `<div class="muted small">No expenses in this range.</div>` : catRows.map(([k,v])=>`
+          <div class="kv"><span class="k">${esc(k)}</span><span class="v">${fmtMoney(v)}<span class="pct">${((v/m.totalExpenses)*100).toFixed(0)}%</span></span></div>
+        `).join('')}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title" style="margin-bottom:14px">Monthly breakdown</div>
+    ${monthRows.length===0 ? `<div class="empty"><strong>No data yet</strong>Add income and expenses to see the monthly breakdown.</div>` : `
     <div class="table-wrap"><table>
       <thead><tr>
         <th>Month</th><th class="num">Income</th><th class="num">Expenses</th><th class="num">Net</th>
         <th class="num">Hours</th><th class="num">Per hour</th><th class="num">Work days</th>
       </tr></thead>
       <tbody>
-        ${monthRows.map(r => `<tr>
+        ${monthRows.map(r=>`<tr>
           <td>${monthLabelOf(r.key)}</td>
           <td class="num pos">${fmtMoney(r.income)}</td>
           <td class="num neg">${fmtMoney(r.expenses)}</td>
@@ -910,305 +1368,250 @@ function viewReports(){
         </tr>`).join('')}
       </tbody>
     </table></div>`}
-  </div>
-  `;
+  </section>`;
 }
-
 function reportRangeDates(){
-  const now = new Date();
-  const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const mode = reportRange.mode;
-  let from, to = todayISO(), label = '';
-
-  if(mode === 'month'){
-    from = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-    label = 'This month';
-  } else if(mode === '30d'){
-    const d = new Date(); d.setDate(d.getDate()-29); from = iso(d);
-    label = 'Last 30 days';
-  } else if(mode === '90d'){
-    const d = new Date(); d.setDate(d.getDate()-89); from = iso(d);
-    label = 'Last 90 days';
-  } else if(mode === 'ytd'){
-    from = `${now.getFullYear()}-01-01`;
-    label = 'Year to date';
-  } else if(mode === 'year'){
-    const d = new Date(); d.setFullYear(d.getFullYear()-1); d.setDate(d.getDate()+1); from = iso(d);
-    label = 'Last 12 months';
+  const now=new Date();
+  const mode=reportRange.mode;
+  let from, to=todayISO(), label='';
+  if(mode==='month'){
+    from=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    label='This month';
+  } else if(mode==='30d'){
+    const d=new Date(); d.setDate(d.getDate()-29); from=isoOf(d); label='Last 30 days';
+  } else if(mode==='90d'){
+    const d=new Date(); d.setDate(d.getDate()-89); from=isoOf(d); label='Last 90 days';
+  } else if(mode==='ytd'){
+    from=`${now.getFullYear()}-01-01`; label='Year to date';
+  } else if(mode==='year'){
+    const d=new Date(); d.setFullYear(d.getFullYear()-1); d.setDate(d.getDate()+1); from=isoOf(d); label='Last 12 months';
   } else {
-    const all = state.incomes.concat(state.expenses).map(x => x.date).sort();
-    from = all[0] || todayISO();
-    label = 'All time';
+    const all=state.incomes.concat(state.expenses).map(x=>x.date).sort();
+    from=all[0]||todayISO(); label='All time';
   }
-  if(from > to) from = to;
-  return { from, to, label };
+  if(from>to) from=to;
+  return {from,to,label};
 }
-
 function afterReports(){
-  $('#repMode').onchange = e => { reportRange.mode = e.target.value; render(); };
+  $('#repMode').onchange=e=>{reportRange.mode=e.target.value; render();};
 }
 
 /* ============================================================
-   VIEW — DATA
+   VIEW — DATA / SETTINGS
    ============================================================ */
 function viewData(){
   const last = state.lastBackupAt ? new Date(state.lastBackupAt).toLocaleString('en-GB') : 'Never';
   const size = new Blob([JSON.stringify(state)]).size;
-  const sizeStr = size < 1024 ? size+' B' : (size < 1048576 ? (size/1024).toFixed(1)+' KB' : (size/1048576).toFixed(2)+' MB');
-
+  const sizeStr = size<1024 ? size+' B' : (size<1048576 ? (size/1024).toFixed(1)+' KB' : (size/1048576).toFixed(2)+' MB');
   return `
-  <div class="section-head">
-    <div><h2 style="margin:0">Data &amp; backup</h2><div class="muted small">Last backup: ${esc(last)} · data size: ${sizeStr}</div></div>
-  </div>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="page-title">Data & settings</div>
+        <div class="page-sub">Last backup: ${esc(last)} · size: ${sizeStr}</div>
+      </div>
+      <button class="btn btn-ghost" id="backToHome">Close</button>
+    </div>
+  </section>
 
-  <div class="card">
-    <h3>Backup</h3>
-    <p class="muted small" style="margin-top:0">
-      Your data lives only in this browser. Export a backup file regularly and save it to Google Drive
-      (or any folder that syncs to Drive). If this browser is ever cleared, you can restore from that file.
-    </p>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      <button class="btn btn-primary" id="btnSaveFile">Save backup file</button>
-      <button class="btn" id="btnSaveAs">Save as… (pick folder)</button>
-      <button class="btn" id="btnLoadFile">Restore from file</button>
-      <input type="file" id="fileInput" accept="application/json,.json" class="hidden">
-    </div>
-    <div id="fileHint" class="muted small" style="margin-top:.6rem"></div>
-  </div>
-
-  <div class="card" style="margin-top:.75rem">
-    <h3>Export to spreadsheet</h3>
-    <p class="muted small" style="margin-top:0">CSV files open in Excel, Numbers and Google Sheets.</p>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      <button class="btn" id="csvIncome">Income CSV</button>
-      <button class="btn" id="csvExpenses">Expenses CSV</button>
-      <button class="btn" id="csvMonthly">Monthly summary CSV</button>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:.75rem">
-    <h3>Settings</h3>
-    <div class="row c2" style="margin-top:.5rem">
-      <div class="field"><label>Currency symbol</label><input id="setCurrency" value="${esc(state.currency)}" maxlength="4"></div>
-      <div class="field"><label>Default hours per day</label><input id="setHours" type="number" step="0.5" min="0" value="${num(state.settings.hoursPerDay)}"></div>
-      <div class="field"><label>Baseline monthly paycheck</label><input id="setBaseline" type="number" step="0.01" min="0" value="${num(state.settings.baselineMonthly)}"></div>
-      <div class="field"><label>Backup reminder (days)</label><input id="setReminder" type="number" min="0" step="1" value="${num(state.settings.backupReminderDays)}"></div>
-    </div>
-    <div class="field">
-      <label>Accounts (comma separated)</label>
-      <input id="setAccounts" value="${esc(state.settings.accounts.join(', '))}">
-    </div>
-    <div class="field">
-      <label>Opening balances</label>
-      <div class="row c3">
-        ${state.settings.accounts.map(a => `
-          <div><label style="text-transform:none;letter-spacing:0">${esc(a)}</label>
-          <input type="number" step="0.01" data-open="${esc(a)}" value="${num(state.openingBalances[a])}"></div>
-        `).join('')}
+  <section class="section">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:6px">Backup</div>
+      <p class="muted small" style="margin-bottom:14px">Your data lives only in this browser. Export regularly and save the file into a Google Drive folder so it syncs automatically.</p>
+      <div class="flex flex-wrap">
+        <button class="btn btn-primary" id="btnSaveFile">${ICON.save} Save backup</button>
+        <button class="btn" id="btnSaveAs">Save as…</button>
+        <button class="btn" id="btnLoadFile">${ICON.upload} Restore</button>
+        <input type="file" id="fileInput" accept="application/json,.json" class="hidden">
       </div>
     </div>
-    <div class="field">
-      <label>Income sources (comma separated)</label>
-      <input id="setIncSrc" value="${esc(state.settings.incomeSources.join(', '))}">
-    </div>
-    <div class="field">
-      <label>Expense categories (comma separated)</label>
-      <input id="setExpCat" value="${esc(state.settings.expenseCategories.join(', '))}">
-    </div>
-    <div class="field">
-      <label>Essential categories (comma separated)</label>
-      <input id="setEssCat" value="${esc(state.settings.essentialCategories.join(', '))}">
-    </div>
-    <button class="btn btn-primary" id="saveSettings">Save settings</button>
-  </div>
 
-  <div class="card" style="margin-top:.75rem">
-    <h3>Danger zone</h3>
-    <p class="muted small" style="margin-top:0">These actions cannot be undone. Export a backup first.</p>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      <button class="btn btn-danger" id="btnWipe">Erase all data</button>
-      <button class="btn btn-danger" id="btnSample">Load sample data</button>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:6px">Export to spreadsheet</div>
+      <p class="muted small" style="margin-bottom:14px">CSV files open in Excel, Numbers and Google Sheets.</p>
+      <div class="flex flex-wrap">
+        <button class="btn" id="csvIncome">${ICON.csv} Income</button>
+        <button class="btn" id="csvExpenses">${ICON.csv} Expenses</button>
+        <button class="btn" id="csvMonthly">${ICON.csv} Monthly</button>
+      </div>
     </div>
-  </div>
-  `;
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px">Settings</div>
+      <div class="row c2">
+        <div class="field"><label>Currency symbol</label><input id="setCurrency" value="${esc(state.currency)}" maxlength="4"></div>
+        <div class="field"><label>Default hours per day</label><input id="setHours" type="number" step="0.5" min="0" value="${num(state.settings.hoursPerDay)}"></div>
+        <div class="field"><label>Baseline monthly paycheck</label><input id="setBaseline" type="number" step="0.01" min="0" value="${num(state.settings.baselineMonthly)}"></div>
+        <div class="field"><label>Backup reminder (days)</label><input id="setReminder" type="number" min="0" step="1" value="${num(state.settings.backupReminderDays)}"></div>
+      </div>
+      <div class="field"><label>Accounts <span class="label-hint">comma separated</span></label><input id="setAccounts" value="${esc(state.settings.accounts.join(', '))}"></div>
+      <div class="field">
+        <label>Opening balances</label>
+        <div class="row c3">
+          ${state.settings.accounts.map(a=>`
+            <div><label style="font-weight:400;color:var(--text-2);font-size:12px">${esc(a)}</label>
+            <input type="number" step="0.01" data-open="${esc(a)}" value="${num(state.openingBalances[a])}"></div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="field"><label>Income sources <span class="label-hint">comma separated</span></label><input id="setIncSrc" value="${esc(state.settings.incomeSources.join(', '))}"></div>
+      <div class="field"><label>Expense categories <span class="label-hint">comma separated</span></label><input id="setExpCat" value="${esc(state.settings.expenseCategories.join(', '))}"></div>
+      <div class="field"><label>Essential categories <span class="label-hint">comma separated</span></label><input id="setEssCat" value="${esc(state.settings.essentialCategories.join(', '))}"></div>
+      <button class="btn btn-primary" id="saveSettings">Save settings</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:6px">Danger zone</div>
+      <p class="muted small" style="margin-bottom:14px">These cannot be undone. Export a backup first.</p>
+      <div class="flex flex-wrap">
+        <button class="btn btn-danger" id="btnWipe">Erase all data</button>
+        <button class="btn btn-danger" id="btnSample">Load sample data</button>
+      </div>
+    </div>
+  </section>`;
 }
-
 function afterData(){
-  $('#btnSaveFile').onclick = () => saveBackupFile();
-  $('#btnSaveAs').onclick   = () => saveBackupFile({ pickFolder:true });
-  $('#btnLoadFile').onclick = () => $('#fileInput').click();
+  $('#backToHome').onclick  = ()=>setView('dashboard');
+  $('#btnSaveFile').onclick = ()=>saveBackupFile();
+  $('#btnSaveAs').onclick   = ()=>saveBackupFile({pickFolder:true});
+  $('#btnLoadFile').onclick = ()=>$('#fileInput').click();
   $('#fileInput').onchange  = handleFileInput;
-
-  $('#csvIncome').onclick  = exportIncomeCSV;
-  $('#csvExpenses').onclick= exportExpensesCSV;
-  $('#csvMonthly').onclick = exportMonthlyCSV;
-
-  $('#saveSettings').onclick = applySettings;
-
-  $('#btnWipe').onclick = () => {
-    if(!confirm('Erase ALL data in this browser? This cannot be undone. Make sure you have a backup file.')) return;
-    if(!confirm('Really erase everything? Type-check: this is permanent.')) return;
+  $('#csvIncome').onclick   = exportIncomeCSV;
+  $('#csvExpenses').onclick = exportExpensesCSV;
+  $('#csvMonthly').onclick  = exportMonthlyCSV;
+  $('#saveSettings').onclick= applySettings;
+  $('#btnWipe').onclick = ()=>{
+    if(!confirm('Erase ALL data in this browser? This cannot be undone.')) return;
+    if(!confirm('Really erase everything? This is permanent.')) return;
     localStorage.removeItem(STORAGE_KEY);
-    state = defaultState();
-    save(); render(); toast('All data erased', 'err');
+    state=defaultState(); save(); setView('dashboard'); toast('All data erased','err');
   };
-
-  $('#btnSample').onclick = () => {
+  $('#btnSample').onclick = ()=>{
     if(!confirm('Replace current data with sample data? Export a backup first if you have real entries.')) return;
-    state = makeSampleState(); save(); render(); toast('Sample data loaded');
+    state=makeSampleState(); save(); setView('dashboard'); toast('Sample data loaded');
   };
 }
 
 /* ============================================================
-   FILE HANDLING — BACKUP & RESTORE
+   BACKUP & RESTORE
    ============================================================ */
 let backupFileHandle = null;
-
 function backupFilename(){
-  const d = new Date();
-  const pad = n => String(n).padStart(2,'0');
+  const d=new Date(), pad=n=>String(n).padStart(2,'0');
   return `finance-backup-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
 }
-
 async function saveBackupFile(opts){
   opts = opts || {};
-  const data = JSON.stringify(state, null, 2);
+  const data = JSON.stringify(state,null,2);
   const name = backupFilename();
-
-  // Preferred: File System Access API — remembers the folder, one-click thereafter.
   if(window.showSaveFilePicker && (opts.pickFolder || !backupFileHandle)){
-    try {
+    try{
       const handle = await window.showSaveFilePicker({
-        suggestedName: name,
-        types: [{ description:'Finance backup', accept:{ 'application/json': ['.json'] } }]
+        suggestedName:name,
+        types:[{description:'Finance backup',accept:{'application/json':['.json']}}]
       });
-      const writable = await handle.createWritable();
-      await writable.write(data);
-      await writable.close();
+      const w = await handle.createWritable();
+      await w.write(data); await w.close();
       backupFileHandle = handle;
       markBackedUp();
-      toast('Backup saved', 'ok');
+      toast('Backup saved','ok');
       return;
-    } catch(err){
-      if(err && err.name === 'AbortError') return;
-      // fall through to download
+    }catch(err){
+      if(err&&err.name==='AbortError') return;
     }
   } else if(window.showSaveFilePicker && backupFileHandle){
-    try {
-      const writable = await backupFileHandle.createWritable();
-      await writable.write(data);
-      await writable.close();
+    try{
+      const w = await backupFileHandle.createWritable();
+      await w.write(data); await w.close();
       markBackedUp();
-      toast('Backup updated in saved folder', 'ok');
+      toast('Backup updated','ok');
       return;
-    } catch(err){
-      backupFileHandle = null;
-      // fall through
-    }
+    }catch(err){ backupFileHandle=null; }
   }
-
-  // Fallback: trigger a normal download.
-  downloadBlob(new Blob([data], {type:'application/json'}), name);
+  downloadBlob(new Blob([data],{type:'application/json'}), name);
   markBackedUp();
-  toast('Backup downloaded — move it to your Drive folder', 'ok');
+  toast('Backup downloaded','ok');
 }
-
 function markBackedUp(){
   state.lastBackupAt = new Date().toISOString();
-  save();
-  renderBackupBanner();
-  if(currentView === 'data') render();
+  save(); renderBackupBanner();
+  if(currentView==='data') render();
 }
-
 function downloadBlob(blob, filename){
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-
 function handleFileInput(e){
   const file = e.target.files && e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
-    try {
+  reader.onload = ()=>{
+    try{
       const parsed = JSON.parse(reader.result);
-      if(!parsed || typeof parsed !== 'object' || (!parsed.incomes && !parsed.expenses && !parsed.settings)){
+      if(!parsed || typeof parsed !== 'object' || (!parsed.incomes && !parsed.expenses && !parsed.settings))
         throw new Error('Not a valid finance backup file');
-      }
       if(!confirm(`Restore from "${file.name}"?\n\nThis will replace everything currently in the app.`)) return;
       state = migrate(parsed);
       save(); render();
-      toast('Data restored from backup', 'ok');
-    } catch(err){
-      alert('Could not restore: ' + err.message);
-    }
+      toast('Data restored from backup','ok');
+    }catch(err){ alert('Could not restore: '+err.message); }
   };
   reader.readAsText(file);
-  e.target.value = '';
+  e.target.value='';
 }
-
 function renderBackupBanner(){
   const el = $('#backupBanner');
   const days = num(state.settings.backupReminderDays);
-  if(days <= 0){ el.classList.add('hidden'); return; }
-  if(!state.lastBackupAt){
-    const hasData = state.incomes.length + state.expenses.length > 0;
-    if(!hasData){ el.classList.add('hidden'); return; }
-    el.innerHTML = `<span>⚠ You have not backed up yet. Your data lives only in this browser.</span>
-                    <button class="btn btn-sm btn-primary" id="bannerBackup">Back up now</button>`;
-    el.classList.remove('hidden');
-    $('#bannerBackup').onclick = () => saveBackupFile();
-    return;
-  }
-  const ageDays = (Date.now() - new Date(state.lastBackupAt).getTime()) / 86400000;
-  if(ageDays >= days){
-    el.innerHTML = `<span>⚠ Last backup was ${Math.floor(ageDays)} days ago. Time for a fresh one.</span>
-                    <button class="btn btn-sm btn-primary" id="bannerBackup">Back up now</button>`;
-    el.classList.remove('hidden');
-    $('#bannerBackup').onclick = () => saveBackupFile();
-  } else {
-    el.classList.add('hidden');
-  }
+  if(days<=0){ el.classList.add('hidden'); return; }
+  const hasData = state.incomes.length+state.expenses.length > 0;
+  if(!hasData){ el.classList.add('hidden'); return; }
+  const ageDays = state.lastBackupAt
+    ? (Date.now()-new Date(state.lastBackupAt).getTime())/86400000
+    : Infinity;
+  if(ageDays < days){ el.classList.add('hidden'); return; }
+  const msg = !state.lastBackupAt
+    ? 'You have not backed up yet. Your data lives only in this browser.'
+    : `Last backup was ${Math.floor(ageDays)} days ago. Time for a fresh one.`;
+  el.innerHTML = `<div class="banner-inner"><span>${esc(msg)}</span>
+    <button class="btn btn-sm btn-primary" id="bannerBackup">Back up now</button></div>`;
+  el.classList.remove('hidden');
+  $('#bannerBackup').onclick = ()=>saveBackupFile();
 }
 
 /* ============================================================
-   CSV EXPORTS
+   CSV
    ============================================================ */
-function csvEscape(v){
-  const s = String(v == null ? '' : v);
-  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
-}
-function toCSV(headers, rows){
-  return [headers.join(',')].concat(rows.map(r => r.map(csvEscape).join(','))).join('\n');
-}
-
+function csvEscape(v){ const s=String(v==null?'':v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+function toCSV(headers, rows){ return [headers.join(',')].concat(rows.map(r=>r.map(csvEscape).join(','))).join('\n'); }
 function exportIncomeCSV(){
   const rows = state.incomes.slice().sort((a,b)=>a.date.localeCompare(b.date));
   const csv = toCSV(
     ['Date','Source','Pay type','Quantity','Rate','Hours','Amount','Account','Notes'],
-    rows.map(i => [i.date, i.source, payTypeLabel(i.payType), i.quantity||'', i.rate||'', i.hours||'', num(i.amount).toFixed(2), i.account||'', i.notes||''])
+    rows.map(i=>[i.date,i.source,payTypeLabel(i.payType),i.quantity||'',i.rate||'',i.hours||'',num(i.amount).toFixed(2),i.account||'',i.notes||''])
   );
   downloadBlob(new Blob([csv],{type:'text/csv'}), `income-${todayISO()}.csv`);
 }
-
 function exportExpensesCSV(){
   const rows = state.expenses.slice().sort((a,b)=>a.date.localeCompare(b.date));
   const csv = toCSV(
     ['Date','Category','Description','Amount','Account','Essential','Notes'],
-    rows.map(e => [e.date, e.category, e.description||'', num(e.amount).toFixed(2), e.account||'', e.essential?'Yes':'No', e.notes||''])
+    rows.map(e=>[e.date,e.category,e.description||'',num(e.amount).toFixed(2),e.account||'',e.essential?'Yes':'No',e.notes||''])
   );
   downloadBlob(new Blob([csv],{type:'text/csv'}), `expenses-${todayISO()}.csv`);
 }
-
 function exportMonthlyCSV(){
-  const rows = lastNMonths(36).reverse().map(monthTotals).filter(r => r.count>0 || r.income>0 || r.expenses>0);
+  const rows = lastNMonths(36).reverse().map(monthTotals).filter(r=>r.count>0||r.income>0||r.expenses>0);
   const csv = toCSV(
     ['Month','Income','Expenses','Net','Hours','Per hour','Work days'],
-    rows.map(r => [monthLabelOf(r.key), r.income.toFixed(2), r.expenses.toFixed(2), r.net.toFixed(2), r.hours.toFixed(2), r.perHour.toFixed(2), r.workDays])
+    rows.map(r=>[monthLabelOf(r.key),r.income.toFixed(2),r.expenses.toFixed(2),r.net.toFixed(2),r.hours.toFixed(2),r.perHour.toFixed(2),r.workDays])
   );
   downloadBlob(new Blob([csv],{type:'text/csv'}), `monthly-summary-${todayISO()}.csv`);
 }
@@ -1221,20 +1624,16 @@ function applySettings(){
   const hours = num($('#setHours').value) || 8;
   const baseline = num($('#setBaseline').value);
   const reminder = Math.max(0, Math.round(num($('#setReminder').value)));
-  const accounts = $('#setAccounts').value.split(',').map(s => s.trim()).filter(Boolean);
-  const incSrc = $('#setIncSrc').value.split(',').map(s => s.trim()).filter(Boolean);
-  const expCat = $('#setExpCat').value.split(',').map(s => s.trim()).filter(Boolean);
-  const essCat = $('#setEssCat').value.split(',').map(s => s.trim()).filter(Boolean);
-
-  if(accounts.length === 0){ alert('You need at least one account.'); return; }
-
-  // Handle opening balances and account renames gracefully
+  const accounts = $('#setAccounts').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const incSrc = $('#setIncSrc').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const expCat = $('#setExpCat').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const essCat = $('#setEssCat').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(accounts.length===0){ alert('You need at least one account.'); return; }
   const newOpen = {};
-  accounts.forEach(a => {
+  accounts.forEach(a=>{
     const el = document.querySelector(`[data-open="${CSS.escape(a)}"]`);
     newOpen[a] = el ? num(el.value) : num(state.openingBalances[a]);
   });
-
   state.currency = cur;
   state.settings.hoursPerDay = hours;
   state.settings.baselineMonthly = baseline;
@@ -1244,252 +1643,217 @@ function applySettings(){
   state.settings.expenseCategories = expCat;
   state.settings.essentialCategories = essCat;
   state.openingBalances = newOpen;
-
-  save(); render(); toast('Settings saved', 'ok');
+  save(); render(); toast('Settings saved','ok');
 }
 
 /* ============================================================
-   MODALS — INCOME
+   MODAL SHELL
    ============================================================ */
 function modalShell(title, bodyHTML, footHTML){
   const root = $('#modalRoot');
+  const isMobile = window.matchMedia('(max-width:639px)').matches;
   root.innerHTML = `
     <div class="modal-overlay" id="overlay">
       <div class="modal" role="dialog" aria-modal="true">
+        ${isMobile?'<div class="modal-grabber"></div>':''}
         <div class="modal-head">
           <h2>${esc(title)}</h2>
-          <button class="icon-btn" id="modalClose" title="Close">✕</button>
+          <button class="icon-btn" id="modalClose" title="Close">${ICON.x}</button>
         </div>
         ${bodyHTML}
         <div class="modal-foot">${footHTML}</div>
       </div>
     </div>`;
-  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
-  const onKey = e => { if(e.key === 'Escape') close(); };
+  const close = ()=>{ root.innerHTML=''; document.removeEventListener('keydown',onKey); };
+  const onKey = e=>{ if(e.key==='Escape') close(); };
   document.addEventListener('keydown', onKey);
   $('#modalClose').onclick = close;
-  $('#overlay').onclick = e => { if(e.target.id === 'overlay') close(); };
+  $('#overlay').onclick = e=>{ if(e.target.id==='overlay') close(); };
   return close;
 }
 
+/* ============================================================
+   INCOME MODAL
+   ============================================================ */
 function openIncomeModal(id){
-  const editing = id ? state.incomes.find(x => x.id === id) : null;
+  const editing = id ? state.incomes.find(x=>x.id===id) : null;
   const it = editing || {
-    id:null, date: todayISO(), source:'', payType:'hourly',
-    quantity:'', rate:'', hours:'', amount:'', account: state.settings.accounts[0] || '', notes:''
+    id:null,date:todayISO(),source:'',payType:'hourly',
+    quantity:'',rate:'',hours:'',amount:'',
+    account:state.settings.accounts[0]||'',notes:''
   };
-
   const body = `
     <div class="row c2">
       <div class="field"><label>Date</label><input type="date" id="iDate" value="${it.date}"></div>
       <div class="field"><label>Pay type</label>
-        <select id="iType">
-          ${PAY_TYPES.map(p => `<option value="${p.id}" ${it.payType===p.id?'selected':''}>${p.label}</option>`).join('')}
-        </select>
+        <select id="iType">${PAY_TYPES.map(p=>`<option value="${p.id}" ${it.payType===p.id?'selected':''}>${p.label}</option>`).join('')}</select>
       </div>
     </div>
     <div class="field"><label>Source</label>
       <input id="iSource" list="srcList" value="${esc(it.source)}" placeholder="Who paid you?">
-      <datalist id="srcList">${state.settings.incomeSources.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+      <datalist id="srcList">${state.settings.incomeSources.map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
     </div>
     <div class="row c3">
       <div class="field"><label id="iQtyLabel">Hours</label><input type="number" step="0.01" min="0" id="iQty" value="${it.quantity}"></div>
-      <div class="field"><label id="iRateLabel">Rate / hour</label><input type="number" step="0.01" min="0" id="iRate" value="${it.rate}"></div>
+      <div class="field"><label id="iRateLabel">Rate per hour</label><input type="number" step="0.01" min="0" id="iRate" value="${it.rate}"></div>
       <div class="field"><label>Hours worked</label><input type="number" step="0.01" min="0" id="iHours" value="${it.hours}"></div>
     </div>
     <div class="row c2">
       <div class="field"><label>Amount received</label><input type="number" step="0.01" min="0" id="iAmount" value="${it.amount}"></div>
       <div class="field"><label>Account</label>
-        <select id="iAccount">${state.settings.accounts.map(a => `<option ${it.account===a?'selected':''}>${esc(a)}</option>`).join('')}</select>
+        <select id="iAccount">${state.settings.accounts.map(a=>`<option ${it.account===a?'selected':''}>${esc(a)}</option>`).join('')}</select>
       </div>
     </div>
     <div class="field"><label>Notes</label><input id="iNotes" value="${esc(it.notes||'')}"></div>
-    <div class="muted small" id="iHint"></div>
+    <div class="muted small" id="iHint" style="min-height:18px"></div>
   `;
-
   const foot = `
-    ${editing ? `<button class="btn btn-danger" id="iDelete">Delete</button>` : ''}
+    ${editing?`<button class="btn btn-danger" id="iDelete">Delete</button>`:''}
     <button class="btn" id="iCancel">Cancel</button>
     <button class="btn btn-primary" id="iSave">${editing?'Save changes':'Add income'}</button>
   `;
-
-  const close = modalShell(editing ? 'Edit income' : 'Add income', body, foot);
-
-  const typeSel = $('#iType');
-  const qtyEl = $('#iQty'), rateEl = $('#iRate'), hoursEl = $('#iHours'), amtEl = $('#iAmount');
-
+  const close = modalShell(editing?'Edit income':'Add income', body, foot);
+  const typeSel=$('#iType'), qtyEl=$('#iQty'), rateEl=$('#iRate'),
+        hoursEl=$('#iHours'), amtEl=$('#iAmount');
   function syncLabels(){
-    const t = PAY_TYPES.find(p => p.id === typeSel.value) || PAY_TYPES[0];
-    $('#iQtyLabel').textContent = t.qtyLabel;
+    const t = PAY_TYPES.find(p=>p.id===typeSel.value) || PAY_TYPES[0];
+    $('#iQtyLabel').textContent  = t.qtyLabel;
     $('#iRateLabel').textContent = t.rateLabel;
   }
-
   function autoCalc(){
-    const t = PAY_TYPES.find(p => p.id === typeSel.value) || PAY_TYPES[0];
-    const q = qtyEl.value === '' ? NaN : num(qtyEl.value);
-    const r = rateEl.value === '' ? NaN : num(rateEl.value);
-
-    if(!isNaN(q) && !isNaN(r)){
-      amtEl.value = (q * r).toFixed(2);
-    }
-    if(t.hoursMode === 'direct' && !isNaN(q)){
-      hoursEl.value = q;
-    } else if(t.hoursMode === 'derive' && !isNaN(q) && (!hoursEl.value || hoursEl.dataset.auto === '1')){
-      hoursEl.value = (q * num(state.settings.hoursPerDay)).toFixed(2);
-      hoursEl.dataset.auto = '1';
+    const t = PAY_TYPES.find(p=>p.id===typeSel.value) || PAY_TYPES[0];
+    const q = qtyEl.value===''?NaN:num(qtyEl.value);
+    const r = rateEl.value===''?NaN:num(rateEl.value);
+    if(!isNaN(q)&&!isNaN(r)) amtEl.value=(q*r).toFixed(2);
+    if(t.hoursMode==='direct' && !isNaN(q)) hoursEl.value=q;
+    else if(t.hoursMode==='derive' && !isNaN(q) && (!hoursEl.value || hoursEl.dataset.auto==='1')){
+      hoursEl.value=(q*num(state.settings.hoursPerDay)).toFixed(2);
+      hoursEl.dataset.auto='1';
     }
     updateHint();
   }
-
   function updateHint(){
-    const amt = num(amtEl.value);
-    const h = num(hoursEl.value);
-    const q = num(qtyEl.value);
-    const parts = [];
-    if(h > 0 && amt > 0) parts.push(`Effective: ${fmtMoney(amt/h)} per hour`);
-    if(q > 0 && amt > 0) parts.push(`${fmtMoney(amt/q)} per ${(PAY_TYPES.find(p=>p.id===typeSel.value)||PAY_TYPES[0]).qtyLabel.toLowerCase().replace(/s$/,'')}`);
+    const amt=num(amtEl.value), h=num(hoursEl.value), q=num(qtyEl.value);
+    const parts=[];
+    if(h>0&&amt>0) parts.push(`${fmtMoney(amt/h)} per hour`);
+    if(q>0&&amt>0){
+      const t = PAY_TYPES.find(p=>p.id===typeSel.value)||PAY_TYPES[0];
+      parts.push(`${fmtMoney(amt/q)} per ${t.qtyLabel.toLowerCase().replace(/s$/,'')}`);
+    }
     $('#iHint').textContent = parts.join(' · ');
   }
-
-  typeSel.onchange = () => { syncLabels(); autoCalc(); };
-  [qtyEl, rateEl].forEach(el => el.oninput = autoCalc);
-  hoursEl.oninput = () => { hoursEl.dataset.auto = '0'; updateHint(); };
-  amtEl.oninput = updateHint;
-
-  syncLabels();
-  if(!editing) updateHint(); else updateHint();
-
+  typeSel.onchange=()=>{syncLabels(); autoCalc();};
+  [qtyEl,rateEl].forEach(el=>el.oninput=autoCalc);
+  hoursEl.oninput=()=>{hoursEl.dataset.auto='0'; updateHint();};
+  amtEl.oninput=updateHint;
+  syncLabels(); updateHint();
   if(editing){
-    $('#iDelete').onclick = () => {
+    $('#iDelete').onclick=()=>{
       if(!confirm('Delete this income entry?')) return;
-      state.incomes = state.incomes.filter(x => x.id !== id);
+      state.incomes = state.incomes.filter(x=>x.id!==id);
       save(); close(); render(); toast('Income deleted');
     };
   }
-
-  $('#iCancel').onclick = close;
-  $('#iSave').onclick = () => {
+  $('#iCancel').onclick=close;
+  $('#iSave').onclick=()=>{
     const date = $('#iDate').value;
     if(!date){ alert('Please pick a date.'); return; }
     const amount = num(amtEl.value);
-    if(amount <= 0){ alert('Amount must be greater than zero.'); return; }
-
+    if(amount<=0){ alert('Amount must be greater than zero.'); return; }
     const rec = {
-      id: editing ? id : uid(),
-      createdAt: editing ? editing.createdAt : new Date().toISOString(),
+      id: editing?id:uid(),
+      createdAt: editing?editing.createdAt:new Date().toISOString(),
       date,
       source: $('#iSource').value.trim(),
       payType: typeSel.value,
-      quantity: qtyEl.value === '' ? '' : num(qtyEl.value),
-      rate: rateEl.value === '' ? '' : num(rateEl.value),
-      hours: hoursEl.value === '' ? '' : num(hoursEl.value),
+      quantity: qtyEl.value===''?'':num(qtyEl.value),
+      rate: rateEl.value===''?'':num(rateEl.value),
+      hours: hoursEl.value===''?'':num(hoursEl.value),
       amount,
       account: $('#iAccount').value,
       notes: $('#iNotes').value.trim()
     };
-
     if(editing){
-      const idx = state.incomes.findIndex(x => x.id === id);
-      state.incomes[idx] = rec;
-    } else {
-      state.incomes.push(rec);
-    }
-    save(); close(); render(); toast(editing ? 'Income updated' : 'Income added', 'ok');
+      const idx = state.incomes.findIndex(x=>x.id===id);
+      state.incomes[idx]=rec;
+    } else state.incomes.push(rec);
+    save(); close(); render(); toast(editing?'Income updated':'Income added','ok');
   };
 }
 
 /* ============================================================
-   MODALS — EXPENSE
+   EXPENSE MODAL
    ============================================================ */
 function openExpenseModal(id){
-  const editing = id ? state.expenses.find(x => x.id === id) : null;
+  const editing = id ? state.expenses.find(x=>x.id===id) : null;
   const it = editing || {
-    id:null, date: todayISO(), category:'', description:'', amount:'',
-    account: state.settings.accounts[1] || state.settings.accounts[0] || '',
-    essential:false, notes:''
+    id:null,date:todayISO(),category:'',description:'',amount:'',
+    account:state.settings.accounts[1]||state.settings.accounts[0]||'',
+    essential:false,notes:''
   };
-  if(!it.category) it.category = state.settings.expenseCategories[0] || 'Other';
-
+  if(!it.category) it.category = state.settings.expenseCategories[0]||'Other';
   const body = `
     <div class="row c2">
       <div class="field"><label>Date</label><input type="date" id="eDate" value="${it.date}"></div>
       <div class="field"><label>Category</label>
-        <select id="eCat">${state.settings.expenseCategories.map(c => `<option ${it.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+        <select id="eCat">${state.settings.expenseCategories.map(c=>`<option ${it.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
       </div>
     </div>
     <div class="field"><label>Description</label><input id="eDesc" value="${esc(it.description||'')}" placeholder="What was it?"></div>
     <div class="row c2">
       <div class="field"><label>Amount</label><input type="number" step="0.01" min="0" id="eAmount" value="${it.amount}"></div>
       <div class="field"><label>Account</label>
-        <select id="eAccount">${state.settings.accounts.map(a => `<option ${it.account===a?'selected':''}>${esc(a)}</option>`).join('')}</select>
+        <select id="eAccount">${state.settings.accounts.map(a=>`<option ${it.account===a?'selected':''}>${esc(a)}</option>`).join('')}</select>
       </div>
     </div>
-    <div class="field">
-      <label style="display:flex;align-items:center;gap:.5rem;text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--text)">
-        <input type="checkbox" id="eEss" ${it.essential?'checked':''}> Essential (unavoidable, recurring)
-      </label>
-    </div>
-    <div class="field"><label>Notes</label><input id="eNotes" value="${esc(it.notes||'')}"></div>
+    <label class="check-row"><input type="checkbox" id="eEss" ${it.essential?'checked':''}><span>Essential — unavoidable, recurring</span></label>
+    <div class="field" style="margin-top:16px"><label>Notes</label><input id="eNotes" value="${esc(it.notes||'')}"></div>
   `;
-
   const foot = `
-    ${editing ? `<button class="btn btn-danger" id="eDelete">Delete</button>` : ''}
+    ${editing?`<button class="btn btn-danger" id="eDelete">Delete</button>`:''}
     <button class="btn" id="eCancel">Cancel</button>
     <button class="btn btn-primary" id="eSave">${editing?'Save changes':'Add expense'}</button>
   `;
-
-  const close = modalShell(editing ? 'Edit expense' : 'Add expense', body, foot);
-
-  // Auto-tick essential when a known-essential category is chosen
-  const catSel = $('#eCat'), essChk = $('#eEss');
-  catSel.onchange = () => {
-    if(state.settings.essentialCategories.includes(catSel.value)) essChk.checked = true;
-  };
-
+  const close = modalShell(editing?'Edit expense':'Add expense', body, foot);
+  const catSel=$('#eCat'), essChk=$('#eEss');
+  catSel.onchange=()=>{ if(state.settings.essentialCategories.includes(catSel.value)) essChk.checked=true; };
   if(editing){
-    $('#eDelete').onclick = () => {
+    $('#eDelete').onclick=()=>{
       if(!confirm('Delete this expense entry?')) return;
-      state.expenses = state.expenses.filter(x => x.id !== id);
+      state.expenses=state.expenses.filter(x=>x.id!==id);
       save(); close(); render(); toast('Expense deleted');
     };
   }
-
-  $('#eCancel').onclick = close;
-  $('#eSave').onclick = () => {
-    const date = $('#eDate').value;
+  $('#eCancel').onclick=close;
+  $('#eSave').onclick=()=>{
+    const date=$('#eDate').value;
     if(!date){ alert('Please pick a date.'); return; }
-    const amount = num($('#eAmount').value);
-    if(amount <= 0){ alert('Amount must be greater than zero.'); return; }
-
-    const rec = {
-      id: editing ? id : uid(),
-      createdAt: editing ? editing.createdAt : new Date().toISOString(),
-      date,
-      category: catSel.value,
+    const amount=num($('#eAmount').value);
+    if(amount<=0){ alert('Amount must be greater than zero.'); return; }
+    const rec={
+      id: editing?id:uid(),
+      createdAt: editing?editing.createdAt:new Date().toISOString(),
+      date, category: catSel.value,
       description: $('#eDesc').value.trim(),
       amount,
       account: $('#eAccount').value,
       essential: essChk.checked,
       notes: $('#eNotes').value.trim()
     };
-
     if(editing){
-      const idx = state.expenses.findIndex(x => x.id === id);
-      state.expenses[idx] = rec;
-    } else {
-      state.expenses.push(rec);
-    }
-    save(); close(); render(); toast(editing ? 'Expense updated' : 'Expense added', 'ok');
+      const idx=state.expenses.findIndex(x=>x.id===id);
+      state.expenses[idx]=rec;
+    } else state.expenses.push(rec);
+    save(); close(); render(); toast(editing?'Expense updated':'Expense added','ok');
   };
 }
 
 /* ============================================================
-   MODALS — TRANSFER
+   TRANSFER MODAL
    ============================================================ */
 function openTransferModal(){
   const accounts = state.settings.accounts;
-  if(accounts.length < 2){ alert('You need at least two accounts to transfer between.'); return; }
-
+  if(accounts.length<2){ alert('You need at least two accounts to transfer between.'); return; }
   const body = `
     <div class="field"><label>Date</label><input type="date" id="tDate" value="${todayISO()}"></div>
     <div class="row c2">
@@ -1498,34 +1862,32 @@ function openTransferModal(){
     </div>
     <div class="field"><label>Amount</label><input type="number" step="0.01" min="0" id="tAmount" value="${num(state.settings.baselineMonthly)||''}"></div>
     <div class="field"><label>Notes</label><input id="tNotes" placeholder="e.g. Monthly paycheck"></div>
-    <div class="muted small">Tip: this is how you pay yourself a fixed monthly amount from your Holding account to your Operating account when income is irregular.</div>
+    <p class="muted small">Tip: this is how you pay yourself a fixed monthly amount from your Holding account to your Operating account when income is irregular.</p>
   `;
   const foot = `<button class="btn" id="tCancel">Cancel</button><button class="btn btn-primary" id="tSave">Add transfer</button>`;
   const close = modalShell('Transfer between accounts', body, foot);
-
-  $('#tCancel').onclick = close;
-  $('#tSave').onclick = () => {
-    const amount = num($('#tAmount').value);
-    if(amount <= 0){ alert('Amount must be greater than zero.'); return; }
-    const from = $('#tFrom').value, to = $('#tTo').value;
-    if(from === to){ alert('From and To must be different accounts.'); return; }
-
+  $('#tCancel').onclick=close;
+  $('#tSave').onclick=()=>{
+    const amount=num($('#tAmount').value);
+    if(amount<=0){ alert('Amount must be greater than zero.'); return; }
+    const from=$('#tFrom').value, to=$('#tTo').value;
+    if(from===to){ alert('From and To must be different accounts.'); return; }
     state.transfers.push({
-      id: uid(), createdAt: new Date().toISOString(),
-      date: $('#tDate').value, from, to, amount,
-      notes: $('#tNotes').value.trim()
+      id:uid(), createdAt:new Date().toISOString(),
+      date:$('#tDate').value, from, to, amount,
+      notes:$('#tNotes').value.trim()
     });
-    save(); close(); render(); toast('Transfer added', 'ok');
+    save(); close(); render(); toast('Transfer added','ok');
   };
 }
 
 /* ============================================================
    DELETE CONFIRM
    ============================================================ */
-function confirmDelete(kind, id){
+function confirmDelete(kind,id){
   if(!confirm('Delete this entry?')) return;
-  if(kind === 'income')  state.incomes  = state.incomes.filter(x => x.id !== id);
-  if(kind === 'expense') state.expenses = state.expenses.filter(x => x.id !== id);
+  if(kind==='income')  state.incomes  = state.incomes.filter(x=>x.id!==id);
+  if(kind==='expense') state.expenses = state.expenses.filter(x=>x.id!==id);
   save(); render(); toast('Deleted');
 }
 
@@ -1535,44 +1897,37 @@ function confirmDelete(kind, id){
 function makeSampleState(){
   const s = defaultState();
   const today = new Date();
-  const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const dayAgo = n => { const d = new Date(today); d.setDate(d.getDate()-n); return iso(d); };
-
-  s.openingBalances = { Holding: 1200, Operating: 400, Savings: 3000 };
-
+  const dayAgo = n => { const d=new Date(today); d.setDate(d.getDate()-n); return isoOf(d); };
+  s.openingBalances = {Holding:1200,Operating:400,Savings:3000};
   s.incomes = [
-    { id:uid(), date:dayAgo(62), source:'Client A', payType:'hourly', quantity:36, rate:25, hours:36, amount:900, account:'Holding', notes:'Design sprint' },
-    { id:uid(), date:dayAgo(55), source:'Employer', payType:'weekly', quantity:1, rate:620, hours:38, amount:620, account:'Holding', notes:'' },
-    { id:uid(), date:dayAgo(48), source:'Client B', payType:'daily', quantity:3, rate:180, hours:24, amount:540, account:'Holding', notes:'On-site days' },
-    { id:uid(), date:dayAgo(41), source:'Employer', payType:'weekly', quantity:1, rate:620, hours:38, amount:620, account:'Holding', notes:'' },
-    { id:uid(), date:dayAgo(33), source:'Client A', payType:'hourly', quantity:22, rate:25, hours:22, amount:550, account:'Holding', notes:'' },
-    { id:uid(), date:dayAgo(26), source:'Gig', payType:'lump', quantity:1, rate:400, hours:10, amount:400, account:'Holding', notes:'One-off event' },
-    { id:uid(), date:dayAgo(19), source:'Employer', payType:'weekly', quantity:1, rate:640, hours:38, amount:640, account:'Holding', notes:'' },
-    { id:uid(), date:dayAgo(12), source:'Client B', payType:'hourly', quantity:18, rate:28, hours:18, amount:504, account:'Holding', notes:'Rate rise' },
-    { id:uid(), date:dayAgo(5),  source:'Employer', payType:'weekly', quantity:1, rate:640, hours:38, amount:640, account:'Holding', notes:'' }
+    {id:uid(),date:dayAgo(62),source:'Client A',payType:'hourly',quantity:36,rate:25,hours:36,amount:900,account:'Holding',notes:'Design sprint'},
+    {id:uid(),date:dayAgo(55),source:'Employer',payType:'weekly',quantity:1,rate:620,hours:38,amount:620,account:'Holding',notes:''},
+    {id:uid(),date:dayAgo(48),source:'Client B',payType:'daily',quantity:3,rate:180,hours:24,amount:540,account:'Holding',notes:'On-site days'},
+    {id:uid(),date:dayAgo(41),source:'Employer',payType:'weekly',quantity:1,rate:620,hours:38,amount:620,account:'Holding',notes:''},
+    {id:uid(),date:dayAgo(33),source:'Client A',payType:'hourly',quantity:22,rate:25,hours:22,amount:550,account:'Holding',notes:''},
+    {id:uid(),date:dayAgo(26),source:'Gig',payType:'lump',quantity:1,rate:400,hours:10,amount:400,account:'Holding',notes:'One-off event'},
+    {id:uid(),date:dayAgo(19),source:'Employer',payType:'weekly',quantity:1,rate:640,hours:38,amount:640,account:'Holding',notes:''},
+    {id:uid(),date:dayAgo(12),source:'Client B',payType:'hourly',quantity:18,rate:28,hours:18,amount:504,account:'Holding',notes:'Rate rise'},
+    {id:uid(),date:dayAgo(5), source:'Employer',payType:'weekly',quantity:1,rate:640,hours:38,amount:640,account:'Holding',notes:''}
   ];
-
   s.expenses = [
-    { id:uid(), date:dayAgo(60), category:'Rent/Mortgage', description:'Monthly rent', amount:850, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(58), category:'Groceries', description:'Weekly shop', amount:78, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(52), category:'Utilities', description:'Electricity + gas', amount:112, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(45), category:'Transport', description:'Train pass', amount:95, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(38), category:'Dining', description:'Dinner out', amount:42, account:'Operating', essential:false },
-    { id:uid(), date:dayAgo(30), category:'Rent/Mortgage', description:'Monthly rent', amount:850, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(28), category:'Groceries', description:'Weekly shop', amount:82, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(22), category:'Subscriptions', description:'Streaming', amount:14, account:'Operating', essential:false },
-    { id:uid(), date:dayAgo(15), category:'Insurance', description:'Car insurance', amount:48, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(9),  category:'Groceries', description:'Weekly shop', amount:74, account:'Operating', essential:true },
-    { id:uid(), date:dayAgo(4),  category:'Shopping', description:'New shoes', amount:65, account:'Operating', essential:false }
+    {id:uid(),date:dayAgo(60),category:'Rent/Mortgage',description:'Monthly rent',amount:850,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(58),category:'Groceries',description:'Weekly shop',amount:78,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(52),category:'Utilities',description:'Electricity + gas',amount:112,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(45),category:'Transport',description:'Train pass',amount:95,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(38),category:'Dining',description:'Dinner out',amount:42,account:'Operating',essential:false},
+    {id:uid(),date:dayAgo(30),category:'Rent/Mortgage',description:'Monthly rent',amount:850,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(28),category:'Groceries',description:'Weekly shop',amount:82,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(22),category:'Subscriptions',description:'Streaming',amount:14,account:'Operating',essential:false},
+    {id:uid(),date:dayAgo(15),category:'Insurance',description:'Car insurance',amount:48,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(9), category:'Groceries',description:'Weekly shop',amount:74,account:'Operating',essential:true},
+    {id:uid(),date:dayAgo(4), category:'Shopping',description:'New shoes',amount:65,account:'Operating',essential:false}
   ];
-
   s.transfers = [
-    { id:uid(), date:dayAgo(58), from:'Holding', to:'Operating', amount:1400, notes:'Monthly paycheck' },
-    { id:uid(), date:dayAgo(28), from:'Holding', to:'Operating', amount:1400, notes:'Monthly paycheck' },
-    { id:uid(), date:dayAgo(2),  from:'Holding', to:'Operating', amount:1400, notes:'Monthly paycheck' }
+    {id:uid(),date:dayAgo(58),from:'Holding',to:'Operating',amount:1400,notes:'Monthly paycheck'},
+    {id:uid(),date:dayAgo(28),from:'Holding',to:'Operating',amount:1400,notes:'Monthly paycheck'},
+    {id:uid(),date:dayAgo(2), from:'Holding',to:'Operating',amount:1400,notes:'Monthly paycheck'}
   ];
-
-  s.lastBackupAt = null;
   return s;
 }
 
@@ -1581,34 +1936,25 @@ function makeSampleState(){
    ============================================================ */
 function init(){
   const had = load();
-  if(!had){
-    // First run — start empty but with sensible defaults
-    state = defaultState();
-    save();
-  }
+  if(!had){ state=defaultState(); save(); }
 
-  // Tabs
-  $$('#tabs .tab').forEach(t => t.onclick = () => setView(t.dataset.view));
+  $$('.tab').forEach(t=>t.onclick=()=>setView(t.dataset.view));
 
-  // Quick backup button
-  $('#btnQuickBackup').onclick = () => saveBackupFile();
+  $('#btnQuickBackup').onclick = ()=>saveBackupFile();
+  $('#btnSettings').onclick    = ()=>setView('data');
 
-  // Warn before leaving with unsaved changes? We auto-save, so instead warn about no backup.
-  window.addEventListener('beforeunload', e => {
-    if(!state.lastBackupAt && (state.incomes.length + state.expenses.length) > 5){
-      e.preventDefault();
-      e.returnValue = '';
+  window.addEventListener('beforeunload', e=>{
+    if(!state.lastBackupAt && (state.incomes.length+state.expenses.length)>5){
+      e.preventDefault(); e.returnValue='';
     }
   });
 
   render();
 
-  // Service worker
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
 }
-
 document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
