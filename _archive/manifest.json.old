@@ -1,13 +1,13 @@
 {
   "name": "Finance",
   "short_name": "Finance",
-  "description": "Private finance tracker with encrypted backups and cloud sync",
+  "description": "Track variable income and expenses in £",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f7f8fa",
-  "theme_color": "#10b981",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2310b981'/%3E%3Ctext x='50%25' y='54%25' font-size='300' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3E%C2%A3%3C/text%3E%3C/svg%3E",
