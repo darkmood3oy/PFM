@@ -1,4 +1,4 @@
-const CACHE = 'finance-tracker-v1';
+const CACHE = 'finance-tracker-v2';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -13,12 +13,10 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Network-first so you always get the latest code when online; cache as fallback offline.
 self.addEventListener('fetch', e => {
-  if(e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  if(url.origin !== self.location.origin) return;
-
+  if (url.origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(res => {
